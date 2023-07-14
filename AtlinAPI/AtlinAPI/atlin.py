@@ -171,7 +171,6 @@ class AtlinYoutube(AtlinBase):
                 raise ValueError(f"{job_status} not in {self._job_status.valid_values}")
         else:
             job_status = self._job_status.created
-        
         schema = schemas.schema_jobs_job_detail_get(self._job_platform.youtube, job_status)
         return schema
             
