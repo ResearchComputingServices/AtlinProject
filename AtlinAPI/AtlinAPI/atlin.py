@@ -6,6 +6,7 @@ import logging
 import json
 from jsonschema import validate
 from . import atlin_schemas as schemas
+import time
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -64,38 +65,90 @@ class AtlinBase(ABC):
         except Exception as e:
             logging.error(f"{__name__}, line {getframeinfo(currentframe()).lineno}: {e}")
             raise e
+    
+    def _request_post(self, url, headers, params, body):
+        try: 
+            logging.debug(f"Making a put request.\nurl: {url}\nheaders: {headers}\nparams: {params}\ndata: {body}")
+            response=requests.post(url=url, headers=headers, params=params, data=body)
+            return response
+        except Exception as e:
+            logging.error(f"{__name__}, line {getframeinfo(currentframe()).lineno}: {e}")
+            raise e
         
     def _job_set_fields(self, job_uid, fields: json = None):
-        headers = {"Content-Type": "application/json"}
-        # schema = self.get_job_detail_schema()
-        # validate(fields, schema=schema)
-        encoded_url = f"{self.url_api}jobs/{job_uid}"
-        return self._request_put(encoded_url, headers, None, fields)
+        encoded_url = f"{self.url_api}job/{job_uid}"
+        return self._request_put(encoded_url, self._header_json, None, fields)
     
+    def job_create(self,
+                user_uid,
+                token_uid,
+                job_status,
+                social_platform,
+                job_tag = '',
+                output_path = '',
+                job_message = {},
+                job_detail = {}):
+        #TODO
+        raise NotImplementedError()
+        encoded_url = f"{self.url_api}/job"
+        print(locals())
+        return self._request_post(encoded_url, self._header_json, None, )
+        
     def job_delete(self, job_uid):
-        encoded_url = f"{self.url_api}/jobs/{job_uid}"
+        encoded_url = f"{self.url_api}/job/{job_uid}"
         return self._request_delete(encoded_url, None, None, None)
     
-    def job_set_status(self, job_uid, status):
-        if status not in self._job_status.valid_values:
-            raise ValueError(f"Invalid status: {status}. Valid status are: {JobStatus.valid_values}")
-        body = dict(job_status=status)
-        return self._job_set_fields(job_uid, body)
-
-    def job_get_fields(self, job_uid, fields):
-        encoded_url = f"{self.url_api}jobs/{job_uid}"
-        self._request_get(encoded_url, None, fields)
+    def job_get(self, user_uid: list = None, social_platform: list = None, job_status: list =None):
+        params = dict()
+        loc = locals()
         
-    def jobs_get(self, job_status: list = None):
-        encoded_url = f"{self.url_api}jobs"
-        return self._request_get(encoded_url, None, job_status)
+        for var in ["user_uid", "social_platform", "job_status"]:
+            if loc[var] is not None:
+                if not isinstance(loc[var], list):
+                    raise TypeError(f"{loc[var]} should be a list.")
+                params[var] = ",".join(loc[var])
+        
+        if params == {}:
+            params = None
+        
+        encoded_url = f"{self.url_api}job"
+        return self._request_get(encoded_url, self._header_json, params)
     
-    def token_get_quota(self, token_uid):
-        encoded_url = f"{self.url_api}tokens/{token_uid}"
-        return self._request_get(encoded_url, None, dict(token_quota=None))
+    def job_get_by_uid(self, job_uid):
+        encoded_url = f"{self.url_api}job/{job_uid}"
+        return self._request_get(encoded_url, None, None)
+    
+    def job_set_status(self, job_uid, job_status):
+        if job_status not in self._job_status.valid_values:
+            raise ValueError(f"Invalid status: {job_status}. Valid status are: {JobStatus.valid_values}")
+        encoded_url = f"{self.url_api}job/status/{job_uid}"
+        body = dict(job_status=job_status)
+        return self._request_put(encoded_url, None, None, body)
+    
+    def token_get(self, token_uid: str = None):
+        if token_uid is None:
+            encoded_url = f"{self.url_api}token"
+        else:
+            encoded_url = f"{self.url_api}token/{token_uid}"
+        return self._request_get(encoded_url, self._header_json, None)
 
-    def token_set_quota(self, token_uid, token_quota: int):
-        encoded_url = f"{self.url_api}tokens/{token_uid}"
+    def token_update(self, token_uid: str, token_details: dict):
+        encoded_url = f"{self.url_api}token/{token_uid}"
+        return self._request_put(encoded_url, self._header_json, None, token_details)
+    
+    def token_delete(self, token_uid: str):
+        encoded_url = f"{self.url_api}token/{token_uid}"
+        return self._request_delete(encoded_url, None, None, None)
+    
+    def token_create(self, token_uid:str, token_details: dict):
+        encoded_url = f"{self.url_api}token"
+        return self._request_post(encoded_url, self._header_json, None, token_details)
+    
+    def token_set_quota(self, token_uid, social_platform: str, token_quota: int):
+        encoded_url = f"{self.url_api}token/quota/{token_uid}"
+        if social_platform not in JobPlatform().valid_values:
+            raise ValueError(f"invalid social platform {social_platform}. Valid values are {','.join(JobPlatform().valid_values)}")
+        body = dict(token_quota = token_quota, social_platform = social_platform)
         return self._request_put(encoded_url, self._header_json, None, dict(token_quota=token_quota))
     
     
@@ -119,26 +172,8 @@ class AtlinYoutube(AtlinBase):
         else:
             job_status = self._job_status.created
         
-        
-        
         schema = schemas.schema_jobs_job_detail_get(self._job_platform.youtube, job_status)
-        # if job_status == JobStatus.running:
-        #     schema = {
-        #         "type": "object",
-        #         "properties" : {
-        #             "current_quota": {"type": "number"},
-        #             "quota_exceeded": {"type": "boolean"},
-        #             "api_key_valid" : {"type": "boolean"},
-        #             "videos_ids" : {"type": "array"},
-        #             "comments_count" : {"type": "object"},
-        #             "actions" : {"type": "array"},
-        #             "all_videos_retrieved" : {"type": "boolean"},
-        #             "all_comments_retrieved" : {"type": "boolean"},
-        #             "error" : {"type": "boolean"},
-        #             "error_description" : {"type": "string"},
-        #         },
-        #         "required": [],
-        #     }
+        return schema
             
             
 class AtlinReddit(AtlinBase):
