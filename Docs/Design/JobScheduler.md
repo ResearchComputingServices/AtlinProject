@@ -99,7 +99,9 @@ Example:
     "client_id": "client_id",
     "secret_token": "token_value",
     "username": "username",
-    "password": "password"
+    "password": "password",
+    "token_quota": 0-100,
+    "modified_quota_timestamp": "yyyymmddHHMMSS",
 }
 ```
 
