@@ -1,55 +1,67 @@
-import sqlite3
 import logging
-from SocialMediaAPIInterface.Scheduler.Utils import *
+# from Scheduler.Utils import *
 
-import sys
-sys.path.insert(0, BASE_DIR)
+# from AtlinAPI.AtlinAPI.atlin import *
 
-from DataBaseUtils import GetRedditTableRow, GetCredentialsTableRow, SetJobStatus, SetOutputFilePath
-from SocialMediaAPIInterface.Tools.RedditAPITool.RedditAPISession import RedditAPISession
+# import sys
+# sys.path.insert(0, BASE_DIR)
 
-####################################################################################################
-#
-####################################################################################################
-def PerformRedditAPICall(sqliteCursor,jobDict):
+# from Tools.RedditAPITool.RedditAPISession import RedditAPISession
+
+# ####################################################################################################
+# #
+# ####################################################################################################
+# def PerformRedditAPICall(jobJSON):
     
-    listOfResponsesJSON = []
+#     listOfResponsesJSON = []
 
-    optionsDict = GetRedditTableRow(sqliteCursor,jobDict['redditJobID'])    
-    credentialsDict = GetCredentialsTableRow(sqliteCursor,jobDict['credentialsID'])
+#     # the credientals  and job detailsfrom the JOB_JSON object    
+#     jobDict = jobJSON.JobJSON
+#     credentialsDict = jobJSON.credentialsDict
     
-    session = RedditAPISession(credentialsDict) 
-    listOfResponsesJSON = session.HandleJobDict(optionsDict) 
-    session.End()
+#     # connect to reddit API
+#     session = RedditAPISession(credentialsDict) 
+    
+#     # execute the job as defined by the jobDict
+#     listOfResponsesJSON = session.HandleJobDict(jobDict) 
+    
+#     # disconnect from the reddit API
+#     session.End()
             
-    return listOfResponsesJSON
+#     return listOfResponsesJSON
 
-####################################################################################################
-#
-####################################################################################################
-def RedditInterface(dataBaseFilename,
-                    jobDict):
+# ####################################################################################################
+# #
+# ####################################################################################################
+# def RedditInterface(jobJSON):
+   
+#     logging.info('PERFORMING JOBS:',flush=True)
+#     logging.info(jobJSON,flush=True)
+   
+#     # Set up connection to database
+#     atlin = AtlinReddit("http://localhost:5000")
+   
+   
+#     job_uid = jobJSON['job_uid']
+#     # Set the job status to "RUNNING"
+#     atlin.set_job(job_uid, JobStatus().running)
+
+#     # make the reddit API call
+#     listOfResponsesJSON = PerformRedditAPICall(jobJSON)
+
+#     # TODO: this should be handled by the tool.
+#     # save the output to a file
+#     # filePath = SaveOutput(listOfResponsesJSON)
+  
+#     # update job status to "DONE" 
+#     atlin.set_job(job_uid, JobStatus().done)
+
+
+#     return  
+
+def RedditInterface(jobJSON):
    
     logging.info('PERFORMING JOBS:',flush=True)
-    logging.info(jobDict,flush=True)
+    logging.info(jobJSON,flush=True)
    
-    # Set up connection to database
-    dataBaseConnection = sqlite3.connect(dataBaseFilename)
-    dataBaseConnection.row_factory = sqlite3.Row 
-    sqliteCursor = dataBaseConnection.cursor()
-
-    # Set the job status to "IN PROG"
-    SetJobStatus(dataBaseConnection, sqliteCursor, jobDict['id'], '\'INPROG\'')
-
-    # make the reddit API call
-    listOfResponsesJSON = PerformRedditAPICall(sqliteCursor,jobDict)
-
-    # save the output to a file
-    filePath = SaveOutput(listOfResponsesJSON)
-  
-    # update the dataFilePath to "<filepath>" and the job status to "DONE" 
-    SetOutputFilePath(dataBaseConnection, sqliteCursor, jobDict['id'], filePath)
-    SetJobStatus(dataBaseConnection, sqliteCursor, jobDict['id'], '\'DONE\'')
-
-    return  
-              
+    return 

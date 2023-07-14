@@ -1,10 +1,15 @@
 import concurrent.futures
 import time
-import sqlite3
-from .Utils import  *
-from .ToolInterfaces.RedditAPIInterface import RedditInterface
-from .ToolInterfaces.CrawlerInterface import CrawlerInterface
-from .ToolInterfaces.YouTubeInterface import YouTubeInterface
+
+import sys
+sys.path.insert(0, '../')
+from AtlinAPI.AtlinAPI.atlin import *
+
+from Utils import  *
+
+from ToolInterfaces.RedditAPIInterface import RedditInterface
+from ToolInterfaces.CrawlerInterface import CrawlerInterface
+from ToolInterfaces.YouTubeInterface import YouTubeInterface
 
 ##############################################################################################################
 # CLASS DEFINITION: Job Scheduler
@@ -17,6 +22,8 @@ class JobScheduler:
     #########################################################################
     dataBaseConnection_ = None
     dataBaseFilePath_ = None
+    
+    atlin_ = None 
     
     keepRunning_ = True
     waitTime_ = 60 # the number of seconds to wait before checking for new jobs
@@ -32,18 +39,16 @@ class JobScheduler:
     #########################################################################
     
     def __init__(   self,
-                    dataBaseFilename = '',
+                    dataBaseDomain = "http://localhost:5000",
                     waitTime = 60):
         
         self.waitTime_ = waitTime
    
         self.keepRunning_ = True
         
-        # ToDo: this code will be replaced when NodeJS backend is complete
-        self.dataBaseFilePath_ = dataBaseFilename
-        self.dataBaseConnection_ = sqlite3.connect(dataBaseFilename)
-        self.dataBaseConnection_.row_factory = sqlite3.Row 
-   
+        # ToDo: Connect to the data base API
+        self.atlin_ = AtlinReddit(dataBaseDomain)
+        
     #########################################################################
     # PRIVATE FUNCTIONS
     #########################################################################
@@ -52,20 +57,19 @@ class JobScheduler:
     # This function will take in a list of dictionarys which describe a job and creates seperate
     # threads to run them
     def submitJobs(self, 
-                   listOfJobDicts):
+                   listOfJobJSON):
 
         # Create a context manager to handle the opening/closing of processes
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            for jobDict in listOfJobDicts:           
+            for jobJSON in listOfJobJSON:           
                 
                 # get the data from the job dictionary    
-                jobType = jobDict['jobType']
+                jobType = jobJSON['jobType']
             
                 if jobType in self.jobHandleDict.keys():
                      # start a process that will execute the correct script
                     executor.submit(self.jobHandleDict[jobType],
-                                    self.dataBaseFilePath_, # todo: REMOVE THIS WHEN WE USE THE NODEjs bACK END
-                                    jobDict) 
+                                    jobJSON) 
                 else:
                     print('[ERROR]: Unknown Job Type: ', jobType)
             
@@ -77,22 +81,24 @@ class JobScheduler:
 
     ############################################################################################
     # This function checks the data base for any rows in the JobsTable which has a job
-    # status set to READY
-    # ToDo: This function will need to be updated to use the NodeJS endpoints when they are ready
+    # status set to CREATED
     def checkDataBaseForNewJobs(self):
         
-        sqliteCursor = self.dataBaseConnection_.cursor()
-        
-        sql_table_query = '''SELECT * FROM JobsTable WHERE jobStatus = \'READY\' '''
-        sqliteCursor.execute(sql_table_query)
-        
-        things = sqliteCursor.fetchall()
-        
-        sqliteCursor.close()
-        
-        listOfJobsDicts = [{k: item[k] for k in item.keys()} for item in things]
+        # request all the "created"
+        listOfJobJSON =  self.atlin_.get_jobs(job_status=[JobStatus.create()])
                       
-        return listOfJobsDicts
+        return listOfJobJSON
+
+    ############################################################################################
+    # This function checks the data base for any rows in the JobsTable which has a job
+    # status set to READY
+    def CheckOnWaitingJobs(self) -> None:
+        
+        # request all the "created"
+        listOfWaitingJobJSON =  self.atlin_.get_jobs(job_status=[JobStatus().paused])
+        
+        for job in listOfWaitingJobJSON:
+            job = job    
 
     ############################################################################################
     # This function checks for any sort of exit conditions
@@ -111,13 +117,17 @@ class JobScheduler:
                 
         while self.keepRunning_:
             
+            # ToDo: Get all waiting jobs and check to see if any can be set to created
+            # ToDo: I think the job status should be ready not created
+            self.CheckOnWaitingJobs()
+            
             # This function will check the database for news and return a list of dictionaries with
             # the row ID of the new job
-            listOfJobsDicts = self.checkDataBaseForNewJobs()
+            listOfJobJSON = self.checkDataBaseForNewJobs()
 
-            if len(listOfJobsDicts) > 0:               
+            if len(listOfJobJSON) > 0:               
                 # This function will submit the jobs to be run on seperate processes
-                self.submitJobs(listOfJobsDicts)
+                self.submitJobs(listOfJobJSON)
                 
             time.sleep(WAIT_TIME)
             
@@ -128,23 +138,7 @@ class JobScheduler:
 ##############################################################################################################
 if __name__ == '__main__':
     
-    js = JobScheduler('testDataBase.db', 5)
+    js = JobScheduler(waitTime=5)
     
     js.Run()
     
- 
-# Need to have API calls which can replace the functionality in checkDataBaseForNewJobs   
-# 
-# an API call which gets all the jobs? Or can we request all the jobs with certain IDs. Status', etc...
-#
-# def checkDataBaseForNewJobs(self):   
-#   sqliteCursor = self.dataBaseConnection_.cursor()    
-#   sql_table_query = '''SELECT * FROM JobsTable WHERE jobStatus = \'READY\' '''
-#   sqliteCursor.execute(sql_table_query)
-#
-#   things = sqliteCursor.fetchall()
-#
-#   sqliteCursor.close()
-#
-#   listOfJobsDicts = [{k: item[k] for k in item.keys()} for item in things]
-#   return listOfJobsDicts

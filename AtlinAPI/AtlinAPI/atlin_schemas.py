@@ -13,6 +13,7 @@ def schema_token_put():
     }
 
 def schema_jobs_get():
+    # JSON structure describing the EXPECTED response structure
     schema =  {
         "type": "array",
         "items": {
