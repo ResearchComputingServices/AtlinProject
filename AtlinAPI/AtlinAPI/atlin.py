@@ -30,13 +30,9 @@ class JobPlatform:
             setattr(self, item.lower(), item)
         self.valid_values = schemas._valid_social_platforms
 
-<<<<<<< HEAD
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Atlin(ABC):
-=======
-class AtlinBase(ABC):
->>>>>>> main
     def __init__(self, 
                  domain: str):
         self._domain = domain if domain[-1] == '/' else f"{domain}/"
@@ -56,19 +52,6 @@ class AtlinBase(ABC):
     def job_get_detail_schema(self, **kwargs):
         pass
     
-<<<<<<< HEAD
-    # ---------------------------------------------------------------------------------------------
-    # ToDo: function should return True/False?
-    # ToDo: only one return statement at the end of the func
-    def _request_get(self, 
-                     url, 
-                     headers, 
-                     params):
-        try: 
-            response = requests.get(url=url, 
-                                    headers=headers, 
-                                    params=params )
-=======
     def _request_delete(self, url, headers, params, body):
         try:
             logging.debug(f"Making a delete request.\nurl: {url}\nheaders: {headers}\nparams: {params}")
@@ -82,7 +65,6 @@ class AtlinBase(ABC):
         try: 
             logging.debug(f"Making a get request.\nurl: {url}\nheaders: {headers}\nparams: {params}")
             response = requests.get(url=url, headers= headers, params=params )
->>>>>>> main
             return response
         except Exception as e:
             logging.error(f"{__file__} {__name__}: {e}")
@@ -104,15 +86,8 @@ class AtlinBase(ABC):
             raise e
     
     # ---------------------------------------------------------------------------------------------
-        
-    def _set_job_fields(self, 
-                        job_uid, 
-                        fields: json = {},):
-        
-<<<<<<< HEAD
-=======
+    
     def _job_set_fields(self, job_uid, fields: json = None):
->>>>>>> main
         headers = {"Content-Type": "application/json"}
         # schema = self.get_job_detail_schema()
         # validate(fields, schema=schema)
@@ -124,53 +99,6 @@ class AtlinBase(ABC):
                                  params = None, 
                                  body = fields)
     
-<<<<<<< HEAD
-    # ---------------------------------------------------------------------------------------------
-    
-    def set_job_status(self, 
-                       job_uid, 
-                       status):
-        
-        # Raise Exception if status invalid
-        if status not in JobStatus().valid_values:
-            raise ValueError(f"Invalid status: {status}. Valid status are: {JobStatus.valid_values}")
-        
-        # Create the Request Body
-        body = dict(job_status=status)
-        
-        # Call next function in sequence
-        return self._set_job_fields(job_uid = job_uid, 
-                                    fields = body)
-
-    # ---------------------------------------------------------------------------------------------
-
-    def get_jobs_fields(self, 
-                        job_uid, 
-                        fields):
-        
-        # url for specific job with primary key "job_uid"
-        encoded_url = f"{self.url_api}jobs/{job_uid}"
-        
-        self._request_get(url=encoded_url, 
-                          headers=None, 
-                          params=fields)
-        
-    # ---------------------------------------------------------------------------------------------    
-    
-    def get_jobs(self, 
-                 job_status: list = None):
-        
-        # url at base of job resource
-        encoded_url = f"{self.url_api}jobs"
-        
-        return self._request_get(url=encoded_url, 
-                                 headers=None, 
-                                 params=job_status)
-            
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class AtlinYoutube(Atlin):
-=======
     def job_delete(self, job_uid):
         encoded_url = f"{self.url_api}/jobs/{job_uid}"
         return self._request_delete(encoded_url, None, None, None)
@@ -207,7 +135,6 @@ class Atlin(AtlinBase):
         raise NotImplementedError("Atlin")
 
 class AtlinYoutube(AtlinBase):
->>>>>>> main
     def __init__(self, domain: str):
         super().__init__(domain)
     
@@ -220,32 +147,6 @@ class AtlinYoutube(AtlinBase):
             job_status = self._job_status.created
         
         
-<<<<<<< HEAD
-        if job_status == JobStatus.running:
-            schema = {
-                "type": "object",
-                "properties" : {
-                    "current_quota": {"type": "number"},
-                    "quota_exceeded": {"type": "boolean"},
-                    "api_key_valid" : {"type": "boolean"},
-                    "videos_ids" : {"type": "array"},
-                    "comments_count" : {"type": "object"},
-                    "actions" : {"type": "array"},
-                    "all_videos_retrieved" : {"type": "boolean"},
-                    "all_comments_retrieved" : {"type": "boolean"},
-                    "error" : {"type": "boolean"},
-                    "error_description" : {"type": "string"},
-                },
-                "required": [],
-            }         
-    
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            
-class AtlinReddit(Atlin):
-    def __init__(self, 
-                 domain: str):
-        input(domain)
-=======
         
         schema = schemas.schema_jobs_job_detail_get(self._job_platform.youtube, job_status)
         # if job_status == JobStatus.running:
@@ -269,7 +170,6 @@ class AtlinReddit(Atlin):
             
 class AtlinReddit(AtlinBase):
     def __init__(self, domain: str):
->>>>>>> main
         super().__init__(domain)
     
     def job_get_detail_schema(self, **kwargs):
