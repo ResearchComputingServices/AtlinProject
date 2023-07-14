@@ -5,12 +5,8 @@ Scheduler/DataBaseUtils.py
 Scheduler/MakeTestDataBase.py
 Scheduler/testDataBase.db
 Scheduler/OutputData/
-<<<<<<< HEAD
 Docs/rcs-sm-db-backup.sql
-
-*.db
-=======
 *.db
 .venv
 *.DS_Store
->>>>>>> c7cce2d (API interface initial)
+atenv/

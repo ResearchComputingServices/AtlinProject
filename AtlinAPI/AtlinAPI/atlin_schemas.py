@@ -12,8 +12,10 @@ def schema_token_put():
         "required": ["social_platform"],
     }
 
-def schema_jobs_get():
-    # JSON structure describing the EXPECTED response structure
+# JSON structure describing the EXPECTED response structure
+def schema_jobs_get(social_platform = None, job_status = None):
+    job_details = schema_jobs_job_detail_get(social_platform=social_platform, job_status=job_status)
+    token_detail = schema_jobs_token_details_get()
     schema =  {
         "type": "array",
         "items": {
@@ -21,11 +23,11 @@ def schema_jobs_get():
             "properties": {
                 "job_uid": {"type": "number"},
                 "token_uid": {"type": "number"},
-                "token_detail": {"type": "object"},
+                "token_detail": token_detail,
                 "job_status": {"enum": _valid_job_status},
                 "social_platform": {"enum": _valid_social_platforms},
                 "output_path": {"type": "string"},
-                "job_detail": {"type": "object"},
+                "job_detail": job_details,
             },
             "required": [
                 "job_uid", 
@@ -66,13 +68,23 @@ def schema_jobs_token_details_get (social_platform):
                 "secret_token": {"type": "string"},
                 "username": {"type": "string"},
                 "password": {"type": "string"},
+                "token_quota": "number",
+                "modified_quota_timestamp": "string",
             },
-            "required": ["client_id", "secret_token","username", "password"]
+            "required": ["client_id", "secret_token","username", "password", "token_quota", "modified_quota_timestamp"]
         }
     else:
         raise ValueError("Invalid social platform")
     return schema
 
+
+def schema_token_put():
+    schema = {
+        "type": "object",
+        "properties" : {
+            
+        }
+    }
 if __name__ == "__main__":
     from jsonschema import validate
     import json
