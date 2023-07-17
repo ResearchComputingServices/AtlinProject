@@ -6,7 +6,11 @@ Scheduler/MakeTestDataBase.py
 Scheduler/testDataBase.db
 Scheduler/OutputData/
 Docs/rcs-sm-db-backup.sql
+
 *.db
+
+sqlfix
 .venv
 *.DS_Store
-atenv/
+
+
