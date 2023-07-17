@@ -102,11 +102,6 @@ class AtlinBase(ABC):
         params = dict()
         loc = locals()
         
-<<<<<<< HEAD
-    def jobs_get(self, job_status: list = None):
-        encoded_url = f"{self.url_api}job"
-        return self._request_get(encoded_url, None, job_status)
-=======
         for var in ["user_uid", "social_platform", "job_status"]:
             if loc[var] is not None:
                 if not isinstance(loc[var], list):
@@ -118,7 +113,6 @@ class AtlinBase(ABC):
         
         encoded_url = f"{self.url_api}job"
         return self._request_get(encoded_url, self._header_json, params)
->>>>>>> main
     
     def job_get_by_uid(self, job_uid):
         encoded_url = f"{self.url_api}job/{job_uid}"
