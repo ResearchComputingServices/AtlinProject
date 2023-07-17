@@ -20,8 +20,8 @@ def RedditInterface(jobJSON):
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',flush=True)
 
     # # TODO: For some reason logging is causing the new processes to fail
-    # # logging.info('PERFORMING JOBS:',flush=True)
-    # # logging.info(jobJSON,flush=True)
+    # # logging.info('PERFORMING JOBS:')
+    # # logging.info(jobJSON)
 
     # # the credientals  and job detailsfrom the JOB_JSON object    
     # jobDict = jobJSON.JobJSON

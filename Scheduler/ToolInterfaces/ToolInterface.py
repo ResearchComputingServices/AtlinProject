@@ -9,38 +9,43 @@ import sys
 sys.path.insert(0, BASE_DIR)
 
 
-def UpdateJobStatus(job_uid, status) -> None:
+####################################################################################################
+# This function will continue to attempt to update the status of a job until sucessful (code 200)
+def updateJobStatus(job_uid, status) -> None:
+    
+    logging.debug('updateJobStatus: Updating status: ' + job_uid)
     
     # Set up connection to database
     atlin = AtlinReddit("http://localhost:6010")
     
-    statusCode = 404
+    statusCode = atlin.job_set_status(job_uid, status).status_code
     
     while statusCode != 200:
-        response = atlin.job_set_status(job_uid, status)
-        statusCode = response.status_code
+        logging.warning('updateJobStatus: Failed to update status. attepting again')
+        statusCode = atlin.job_set_status(job_uid, status).status_code
         time.sleep(1)
+
+    logging.debug('updateJobStatus: Updating status complete')
 
     return
 
 ####################################################################################################
 #
-####################################################################################################
 def genericInterface(toolFunctionPointer, jobJSON):
-         
-    # For some reason the logging it not working  
-    # logging.info('PERFORMING JOBS:',flush=True)
-    # logging.info(jobJSON,flush=True)
-           
+
     job_uid = jobJSON['job_uid']
-    
+   
+    logging.info('genericInterface: Starting job: ' + job_uid)
+                
     # Set the job status to "RUNNING"
-    UpdateJobStatus(job_uid, JobStatus().running)
+    updateJobStatus(job_uid, JobStatus().running)
  
     # Make call to tool
     jobCompleteStatus = toolFunctionPointer(jobJSON)
     
     # update job status to as either SUCCESS or FAILURE
-    UpdateJobStatus(job_uid, jobCompleteStatus)
+    updateJobStatus(job_uid, jobCompleteStatus)
+    
+    logging.info('genericInterface: Finished Job: ' + job_uid)
  
     return  
