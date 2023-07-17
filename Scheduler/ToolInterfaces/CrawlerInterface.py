@@ -1,33 +1,20 @@
-import sqlite3
 import sys
-import time
-import random
 import logging
 
-sys.path.insert(0, '/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/')
-
-from Utils import *
 
 ####################################################################################################
 #
 ####################################################################################################
-
-def PerformCrawl(sqliteCursor,jobDict):
-    
-    listOfResponsesJSON = []
-
-    time.sleep(random.randint(1,5))
-    
-    return listOfResponsesJSON
-
-####################################################################################################
-#
-####################################################################################################
-def CrawlerInterface(dataBaseFilename,
-                    jobDict):
+def CrawlerInterface(jobJSON):
    
-    logging.info('PERFORMING JOBS:',flush=True)
-    logging.info(jobDict,flush=True)
+    # logging.info('PERFORMING JOBS:',flush=True)
+    # logging.info(jobDict,flush=True)
+   
+    # TODO: This is a place holder function for now
+    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    print('RUNNING CRAWL JOB')
+    print(jobJSON)
+    print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~',flush=True)
    
     return  
               
