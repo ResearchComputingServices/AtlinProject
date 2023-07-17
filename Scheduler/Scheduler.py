@@ -39,7 +39,7 @@ class JobScheduler:
     #########################################################################
     
     def __init__(   self,
-                    dataBaseDomain = "http://localhost:5000",
+                    dataBaseDomain = "http://localhost:6010",
                     waitTime = 60):
         
         self.waitTime_ = waitTime
@@ -84,10 +84,17 @@ class JobScheduler:
     # status set to CREATED
     def checkDataBaseForNewJobs(self):
         
+        response = None
+        
         # request all the "created"
-        listOfJobJSON =  self.atlin_.get_jobs(job_status=[JobStatus.create()])
-                      
-        return listOfJobJSON
+        try:
+            response = self.atlin_.jobs_get(job_status=dict(status=[JobStatus().created]))
+        except Exception as e:
+            logging.error(e)  
+            print('ERROR: checkDataBaseForNewJobs: ',e)          
+            
+
+        return response
 
     ############################################################################################
     # This function checks the data base for any rows in the JobsTable which has a job
@@ -95,11 +102,17 @@ class JobScheduler:
     def CheckOnWaitingJobs(self) -> None:
         
         # request all the "created"
-        listOfWaitingJobJSON =  self.atlin_.get_jobs(job_status=[JobStatus().paused])
-        
-        for job in listOfWaitingJobJSON:
-            job = job    
-
+        response = None
+        try:
+            
+            response = self.atlin_.jobs_get(job_status=dict(status=[JobStatus().paused]))
+               
+        except Exception as e:
+            logging.error(e)
+            print('ERROR: CheckOnWaitingJobs: ',e)
+            
+        print(response,type(response),response.json())
+           
     ############################################################################################
     # This function checks for any sort of exit conditions
     def checkExit(self):
@@ -123,11 +136,11 @@ class JobScheduler:
             
             # This function will check the database for news and return a list of dictionaries with
             # the row ID of the new job
-            listOfJobJSON = self.checkDataBaseForNewJobs()
-
-            if len(listOfJobJSON) > 0:               
-                # This function will submit the jobs to be run on seperate processes
-                self.submitJobs(listOfJobJSON)
+            # response = self.checkDataBaseForNewJobs()
+            
+            # if len(listOfJobJSON) > 0:               
+            #     # This function will submit the jobs to be run on seperate processes
+            #     self.submitJobs(listOfJobJSON)
                 
             time.sleep(WAIT_TIME)
             

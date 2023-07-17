@@ -9,20 +9,11 @@ from . import atlin_schemas as schemas
 
 logging.basicConfig(level=logging.DEBUG)
 
-####################################################################################################
-#
-####################################################################################################
-
-# ToDO: define class members before they are use
-# ToDO: use "hints" to show expected arg types, and function return type
-
 class JobStatus:
     def __init__(self) -> None:
         for item in schemas._valid_job_status:
             setattr(self, item.lower(), item)
         self.valid_values = schemas._valid_job_status
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class JobPlatform:
     def __init__(self):
@@ -30,9 +21,7 @@ class JobPlatform:
             setattr(self, item.lower(), item)
         self.valid_values = schemas._valid_social_platforms
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-class Atlin(ABC):
+class AtlinBase(ABC):
     def __init__(self, 
                  domain: str):
         self._domain = domain if domain[-1] == '/' else f"{domain}/"
@@ -41,13 +30,10 @@ class Atlin(ABC):
         self._job_platforms = JobPlatform()
         self._header_json  = {"Content-Type": "application/json"}
     
-    
-    # ----------------------------------------------------------------------------------------------
-    
     @property
     def url_api(self):
         return f"{self._domain}{self._apipath}"
-        
+    
     @abstractmethod
     def job_get_detail_schema(self, **kwargs):
         pass
@@ -69,14 +55,8 @@ class Atlin(ABC):
         except Exception as e:
             logging.error(f"{__file__} {__name__}: {e}")
             raise e
-    
-    # ---------------------------------------------------------------------------------------------
         
-    def _request_put(self, 
-                     url, 
-                     headers, 
-                     params, 
-                     body):
+    def _request_put(self, url, headers, params, body):
         try: 
             logging.debug(f"Making a put request.\nurl: {url}\nheaders: {headers}\nparams: {params}\ndata: {body}")
             response=requests.put(url=url, headers=headers, params=params, data=body)
@@ -84,20 +64,13 @@ class Atlin(ABC):
         except Exception as e:
             logging.error(f"{__name__}, line {getframeinfo(currentframe()).lineno}: {e}")
             raise e
-    
-    # ---------------------------------------------------------------------------------------------
-    
+        
     def _job_set_fields(self, job_uid, fields: json = None):
         headers = {"Content-Type": "application/json"}
         # schema = self.get_job_detail_schema()
         # validate(fields, schema=schema)
         encoded_url = f"{self.url_api}jobs/{job_uid}"
-        
-        # Call next funtion in sequence
-        return self._request_put(url = encoded_url, 
-                                 headers = headers, 
-                                 params = None, 
-                                 body = fields)
+        return self._request_put(encoded_url, headers, None, fields)
     
     def job_delete(self, job_uid):
         encoded_url = f"{self.url_api}/jobs/{job_uid}"
@@ -114,7 +87,7 @@ class Atlin(ABC):
         self._request_get(encoded_url, None, fields)
         
     def jobs_get(self, job_status: list = None):
-        encoded_url = f"{self.url_api}jobs"
+        encoded_url = f"{self.url_api}job"
         return self._request_get(encoded_url, None, job_status)
     
     def token_get_quota(self, token_uid):

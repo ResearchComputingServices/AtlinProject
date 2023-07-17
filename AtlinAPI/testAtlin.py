@@ -3,16 +3,17 @@ from AtlinAPI import JobStatus, AtlinYoutube
 job_status = JobStatus()
 job_uid = 123456789
 token_uid = 24681379
-atlin = AtlinYoutube("http://localhost:5000")
+atlin = AtlinYoutube("http://localhost:6010")
 
 # GET all the jobs in the database
 response = atlin.jobs_get()
 if response.status_code == 200:
     jobs = response.json()
+    print(jobs)
     
 # GET only jobs with job_status = "CREATED" or "PAUSED"
 response = atlin.jobs_get(job_status = dict(status=[job_status.created, job_status.paused] ))
-
+input(response.json())
 # GET - get fields of a job (social_platform and job_details)
 atlin.job_get_fields(job_uid, dict(social_platform="", job_details=""))
 
