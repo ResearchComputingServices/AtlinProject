@@ -87,7 +87,7 @@ class AtlinBase(ABC):
                 social_platform,
                 job_tag = [],
                 output_path = '',
-                job_message = {},
+                job_message = '',
                 job_detail = {}):
         #TODO
         if job_status not in self._job_status.valid_values:
@@ -173,7 +173,7 @@ class AtlinBase(ABC):
 
     def token_update(self, token_uid: str, token_details: dict):
         encoded_url = f"{self.url_api}token/{token_uid}"
-        return self._request_put(encoded_url, self._header_json, None, token_details)
+        return self._request_put(encoded_url, None, None, token_details)
     
     def token_delete(self, token_uid: str):
         encoded_url = f"{self.url_api}token/{token_uid}"
@@ -212,8 +212,7 @@ class AtlinYoutube(AtlinBase):
             job_status = self._job_status.created
         schema = schemas.schema_jobs_job_detail_get(self._job_platform.youtube, job_status)
         return schema
-            
-            
+           
 class AtlinReddit(AtlinBase):
     def __init__(self, domain: str):
         super().__init__(domain)

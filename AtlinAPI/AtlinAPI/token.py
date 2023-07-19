@@ -162,7 +162,17 @@ class RedditToken(Token):
     # def verify_token_details(self, token_details):
     #     if not all(key in token_details.keys() for key in self._required_token_structure.keys()):
     #         raise ValueError(f"Missing token key. Required keys are: {self._required_token_structure.keys()}")
-        
+
+def token_filter_by_keyword(data: list, keyword: str, value: str):
+    out = []
+    for  d in data:
+        if isinstance(d, dict):
+            if keyword in d.keys():
+                if d[keyword] == value:
+                    out.append(d)
+    return out
+                
+            
         
 if __name__ == "__main__":
     token = YoutubeToken()

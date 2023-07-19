@@ -13,4 +13,5 @@ sqlfix
 .venv
 *.DS_Store
 
+*_test.py
 

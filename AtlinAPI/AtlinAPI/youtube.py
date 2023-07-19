@@ -106,7 +106,6 @@ class YoutubeJobDetailsResume:
         for key in self._required_fields.keys():
             setattr(self, key, data[key])
         
-          
 class YoutubeJobDetails:
     _required_fields = ["job_name", "job_submit", "job_resume"]
     
@@ -114,10 +113,15 @@ class YoutubeJobDetails:
                  job_name: str = '',
                  job_submit: YoutubeJobDetailsSubmit = YoutubeJobDetailsSubmit(),
                  job_resume: YoutubeJobDetailsResume = YoutubeJobDetailsResume(),
-                 ) -> None:
+                 data: dict = None) -> None:
+        
         self.job_name = job_name
         self.job_submit = job_submit
         self.job_resume = job_resume
+        
+        if data is not None:
+            self.from_json(data)
+        
         
     def from_json(self, data):
         if isinstance(data, str):

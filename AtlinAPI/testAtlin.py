@@ -1,4 +1,7 @@
 from AtlinAPI import JobStatus, JobPlatform, AtlinYoutube, YoutubeToken
+from AtlinAPI import YoutubeJobDetails
+from AtlinAPI import Job
+
 import json
 
 job_status = JobStatus()
@@ -38,7 +41,8 @@ else:
 response = atlin.token_get(user_uid = user_uid)
 if response:
     print(f"returned {len(response.json())} tokens for user {user_uid}")
-    
+response.raise_for_status()
+
 response = atlin.token_get(token_uid = token_yt.token_uid)
 if response:
     print(f"returned token for id {token_yt.token_uid}\n{response.json()}")
@@ -48,7 +52,7 @@ if response:
     print(f"got {len(response.json())} tokens for social_platform 'YOUTUBE'")
 
 token_yt.token_name = "New token name"
-response = atlin.token_update(token_yt.token_uid, token_yt.to_json())
+response = atlin.token_update(token_yt.token_uid, token_yt.to_dict())
 if response.ok:
     token_yt.from_json(response.json())
     print(f"Token name updated to '{token_yt.token_name}'")
@@ -71,19 +75,25 @@ def print_jobs(jobs):
 
 
 # POST create a job
+youtube_job_details = YoutubeJobDetails()
+
 response = atlin.job_create(
     user_uid = user_uid,
     token_uid = token_yt.token_uid,
     job_status = job_status.created,
     social_platform = job_platform.youtube,
     job_tag = ["tag1", "tag2"],
-    # job_details
+    job_detail = youtube_job_details.to_dict(),
     # token_uid,
     # job_status.created,
     # job_platform.youtube,
     )
+if response:
+    print(f"Job with uid {response.json()['job_uid']} created.")
+    print(json.dumps(response.json(), indent=2))
+    job = Job(response.json())
 
-# GET all the jobs in the database #TODO not yet implemented in the backend.
+# GET all the jobs in the database .
 response = atlin.job_get()
 print_jobs( extract_jobs(response))
     
@@ -91,15 +101,19 @@ print_jobs( extract_jobs(response))
 response = atlin.job_get(job_status =[job_status.created])
 print_jobs( extract_jobs(response))
 
-# GET only jobs with job_status = "CREATED" or "PAUSED" TODO not implemented in backend.
+# GET only jobs with job_status = "CREATED" or "PAUSED" 
 response = atlin.job_get(job_status =[job_status.created, job_status.paused])
 print_jobs( extract_jobs(response))
+jobs = extract_jobs(response)
 
 # GET job  by job_uid
 # http://localhost:6010/api/v1/job/9978d901-96e6-4a80-bfec-3a7dd87d81ad
-response = atlin.job_get_by_uid(job_uid)
+response = atlin.job_get_by_uid(jobs[0]['job_uid'])
+
 print_jobs( extract_jobs(response))
 
+job = Job(response.json())
+job.to_dict()
 # PUT - update the status of a job to running
 response = atlin.job_set_status(job_uid, job_status.running)
 
