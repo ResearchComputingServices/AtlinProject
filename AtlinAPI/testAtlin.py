@@ -128,6 +128,13 @@ response = atlin.job_set_status(job.job_uid, job_status.running)
 job.from_json(response.json())
 response.raise_for_status()
 
+# PUT - update job 
+job.output_path = "/var/data/file.json"
+response = atlin.job_update(job.job_uid, job.to_dict())
+response.raise_for_status()
+if response:
+    job.from_json(response.json())
+
 # GET - get quota
 response = atlin.token_get(job.token_uid)
 if response.status_code == 200:

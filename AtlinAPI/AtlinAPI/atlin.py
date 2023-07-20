@@ -119,8 +119,10 @@ class AtlinBase(ABC):
         # print(locals())
         # return self._request_post(encoded_url, self._header_json, None, )
     
-    def job_update(self,**kwargs):
-        pass
+    def job_update(self, job_uid, data):
+        encoded_url = f"{self.url_api}job/{job_uid}"
+        return self._request_put(encoded_url, None, None, data)
+        
     
     def job_delete(self, job_uid):
         encoded_url = f"{self.url_api}job/{job_uid}"
