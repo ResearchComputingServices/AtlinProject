@@ -55,7 +55,7 @@ def schema_jobs_token_details_get (social_platform):
             "properties": {
                 "api_token": "string",
                 "token_quota": "number",
-                "modified_quota_timestamp": "string",
+                "modified_date": "string",
             },
             "required": ["api_token", "token_quota", "modified_quota_timestamp"]
         }
