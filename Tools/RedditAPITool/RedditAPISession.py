@@ -2,8 +2,14 @@ import argparse
 import requests
 import logging
 import os
+import uuid
 
-from RedditUtils import *
+BASE_DIR ='/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/Tools/RedditAPITool/'
+
+import sys
+sys.path.insert(0, BASE_DIR)
+
+import RedditUtils 
 
 ####################################################################################################
 # Objects which are passed back as children in the response to a GET request contain objects.
@@ -65,10 +71,7 @@ class RedditAPISession:
                                 auth=auth, 
                                 data=self.credientalsDict_, 
                                 headers=self.header_)
-        
-        # Check if there was an error message returned
-        self.check4ResponseError(resp.json(), True)
-        
+                
         # convert response to JSON and get access_token value
         TOKEN = resp.json()['access_token']
 
@@ -117,7 +120,7 @@ class RedditAPISession:
     def getSubredditPosts(  self,
                             jobDict):
         # Construct the urlSring for the GET request
-        urlString = API_BASE + 'r/'+jobDict['subreddit']+'/'+jobDict['sortBy']
+        urlString = RedditUtils.API_BASE + 'r/'+jobDict['subreddit']+'/'+jobDict['sortBy']
                
         # Submit Request
         return self.requestGet(urlString=urlString,
@@ -177,14 +180,16 @@ class RedditAPISession:
     def requestGet(self,
                    urlString,
                    numResultsRequested):
-                       
+        
+        sucessFlag = False
+                    
         responseList = []
 
-        if numResultsRequested > MAX_NUM_RESPONSES_TOTAL:
-            numResultsRequested = MAX_NUM_RESPONSES_TOTAL
+        if numResultsRequested > RedditUtils.MAX_NUM_RESPONSES_TOTAL:
+            numResultsRequested = RedditUtils.MAX_NUM_RESPONSES_TOTAL
 
         # calculate floor division
-        performNumRequests = numResultsRequested // MAX_NUM_RESPONSES_PER_REQUEST
+        performNumRequests = numResultsRequested // RedditUtils.MAX_NUM_RESPONSES_PER_REQUEST
         if performNumRequests == 0:
             performNumRequests = 1
                       
@@ -192,25 +197,28 @@ class RedditAPISession:
         for i in range(0, performNumRequests):
 
             self.params_['after'] = afterID        
-            
-            print(urlString)
-            print(self.header_)
-            print(self.params_)
-            
-            resp = requests.get(url=urlString,
-                                headers = self.header_,
-                                params = self.params_,
-                                timeout=REQUEST_GET_TIMEOUT)
- 
-            respDict = resp.json()
-            if isinstance(respDict,list):
-                respDict = resp.json()[0]               
+                        
+            try:
+                response = requests.get(url=urlString,
+                                    headers = self.header_,
+                                    params = self.params_,
+                                    timeout=RedditUtils.REQUEST_GET_TIMEOUT)
 
-            responseList.append(respDict) 
+                if response.status_code == 200:
+                    
+                    sucessFlag = True
+                    respJSON = response.json()
+                                    
+                    for resp in respJSON['data']['children']:                     
+                        responseList.append(resp) 
 
-            if not self.check4ResponseError(respDict):
-                if len(respDict['data']['children']) > 0:
-                    afterID = respDict['data']['children'][-1]['data']['name']
+                        
+                    if len(respJSON['data']['children']) > 0:
+                        afterID = respJSON['data']['children'][-1]['data']['name']
+                         
+            except Exception as e:
+                print(e)
+           
 
         # Store the results in the correct member
         self.listOfResponses_ = responseList
@@ -218,7 +226,7 @@ class RedditAPISession:
         # Store thenumber of requests made so # of request per minute can be monitored
         self.numRequest_ = performNumRequests
         
-        return True
+        return sucessFlag
     
     ####################################################################################################
     # This function handles 'subreddit' type jobs
@@ -287,32 +295,43 @@ class RedditAPISession:
         return successFlag
     
     ####################################################################################################
+    # Get number of requests sent for the last job
+    def SaveResponses(self,
+                      folderPath : str) -> bool:
+        
+        successFlag = False
+        
+        # check if the file path exists and is accessbile then write the listOfResponses_ to the file
+        if os.path.exists(folderPath):          
+            filename = str(uuid.uuid1())+'.json'
+            
+            filePath = os.path.join(folderPath, filename)
+            file = open(filePath, "w")
+            
+            listOrResponses = self.GetResponses()
+            for responseJSON in listOrResponses:
+                
+                file.write(str(responseJSON['data']))
+            
+            file.close()     
+            
+            successFlag = True   
+            
+        return successFlag
+    
+    ####################################################################################################
     # Get the list of responses from the last Request
     def GetResponses(self) -> list:
         return self.listOfResponses_
-        
+           
     ####################################################################################################
-    # Get number of requests sent for the last job
-    def SaveResponses(self,
-                      filePath : str) -> bool:
-        
-        successFlag = True
-        
-        # TODO: check if the file path exists and is accessbile then write the listOfResponses_ to the file
-        print('Save to: ', filePath, flush = True)
-        
-        
-        
-        return successFlag
-    
-        ####################################################################################################
     # Get number of requests sent for the last job
     def GetNumberOfRequests(self) -> int:
         return self.numRequest_
        
     ####################################################################################################
     #
-    def End():
+    def End(arg1):
         # TODO: do stuff here to end the session cleanly
         logging.debug('END SESSION')
         
@@ -325,16 +344,10 @@ class RedditAPISession:
 
 # TODO: Change --getPosts and --getComments so they dont require arguments (nrgs = 0?)
 # TODO: Check if --post --getComments returns all comments
-# TODO: add functionality for saving the data to a file
 # TODO: add functionality for printing retrieved data to the screen
 
 # Example command line calls:
-# python RedditAPISession.py --subreddit 'canada' --getposts 1
-# python RedditAPISession.py --subreddit 'canada' --keyword ide
-# python RedditAPISession.py --user pmz --getcomments 1
-# python RedditAPISession.py --user pmz --getposts 1
-# python RedditAPISession.py --post 13e5oxw --getcomments 1
-
+#python RedditAPISession.py --subreddit 'canada' --getposts 1 --n 1 --sortBy new
 def ExtractCommandLineArgs() :
     parser = argparse.ArgumentParser()
 
@@ -343,7 +356,7 @@ def ExtractCommandLineArgs() :
     # Return options
     parser.add_argument('--sortBy',default='top')
     parser.add_argument('--timeFrame',default='all')
-    parser.add_argument('--n', type=int,default=MAX_NUM_RESPONSES_TOTAL)
+    parser.add_argument('--n', type=int,default=RedditUtils.MAX_NUM_RESPONSES_TOTAL)
 
     # Items
     items = parser.add_mutually_exclusive_group(required=True)
@@ -384,10 +397,9 @@ if __name__ == '__main__':
         #now do something with thre responses
         numResponses = 0
         for responseJSON in session.GetResponses():
-            numResponses += len(responseJSON['data']['children'])
-            for aPost in responseJSON['data']['children']:
-                print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ POST DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-                DisplayDict(aPost['data'], POST_KEYS_OF_INTEREST)
-                input()    
+            print(responseJSON)
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ POST DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            RedditUtils.DisplayDict(responseJSON['data'], RedditUtils.POST_KEYS_OF_INTEREST)
+            input()    
     
            
