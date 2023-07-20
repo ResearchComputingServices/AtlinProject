@@ -46,22 +46,26 @@ response.raise_for_status()
 response = atlin.token_get(token_uid = token_yt.token_uid)
 if response:
     print(f"returned token for id {token_yt.token_uid}\n{response.json()}")
+response.raise_for_status()
 
 response = atlin.token_get(social_platform="YOUTUBE")
 if response:
     print(f"got {len(response.json())} tokens for social_platform 'YOUTUBE'")
+response.raise_for_status()
 
 token_yt.token_name = "New token name"
 response = atlin.token_update(token_yt.token_uid, token_yt.to_dict())
 if response.ok:
     token_yt.from_json(response.json())
     print(f"Token name updated to '{token_yt.token_name}'")
+response.raise_for_status()
 
 # Example of token deletion at the end.
 
 response = atlin.token_set_quota(token_yt.token_uid, token_yt.social_platform, 9213)
 if response:
     print(response.json())
+response.raise_for_status()
 
 def extract_jobs(response):
     jobs = []
@@ -92,45 +96,60 @@ if response:
     print(f"Job with uid {response.json()['job_uid']} created.")
     print(json.dumps(response.json(), indent=2))
     job = Job(response.json())
+response.raise_for_status()
 
 # GET all the jobs in the database .
 response = atlin.job_get()
 print_jobs( extract_jobs(response))
-    
+response.raise_for_status()
+
 # GET only jobs with job_status = "CREATED"
 response = atlin.job_get(job_status =[job_status.created])
 print_jobs( extract_jobs(response))
+response.raise_for_status()
 
 # GET only jobs with job_status = "CREATED" or "PAUSED" 
 response = atlin.job_get(job_status =[job_status.created, job_status.paused])
 print_jobs( extract_jobs(response))
 jobs = extract_jobs(response)
+response.raise_for_status()
 
 # GET job  by job_uid
 # http://localhost:6010/api/v1/job/9978d901-96e6-4a80-bfec-3a7dd87d81ad
 response = atlin.job_get_by_uid(jobs[0]['job_uid'])
+response.raise_for_status()
 
 print_jobs( extract_jobs(response))
 
 job = Job(response.json())
-job.to_dict()
-# PUT - update the status of a job to running
-response = atlin.job_set_status(job_uid, job_status.running)
 
-# DEL - delete a job
-# response = atlin.job_delete(job_uid)
+# PUT - update the status of a job to running
+response = atlin.job_set_status(job.job_uid, job_status.running)
+job.from_json(response.json())
+response.raise_for_status()
 
 # GET - get quota
-response = atlin.token_get(token_uid)
+response = atlin.token_get(job.token_uid)
 if response.status_code == 200:
     try:
         quota = response.json()['token_detail']['token_quota']
     except Exception as e:
         print(f"Could not fetch token quota. {e}")
+response.raise_for_status()
         
-# PUT - set quota #TODO not returning the value not working
-response = atlin.token_set_quota(token_uid, job_platform.youtube, 300)
+# PUT - set quota 
+response = atlin.token_set_quota(job.token_uid, job.social_platform, 300)
+response.raise_for_status()
 
-response = atlin.token_delete(token_yt.token_uid)
+response = atlin.token_delete(job.token_uid)
 if response:
     print(f"Deleted token with token id {token_yt.token_uid}")
+response.raise_for_status()
+
+# DEL - delete a job
+response = atlin.job_delete(job.job_uid)
+if response:
+    print(f"Deleted job with job_uid '{job.job_uid}'")
+response.raise_for_status()
+
+pass
