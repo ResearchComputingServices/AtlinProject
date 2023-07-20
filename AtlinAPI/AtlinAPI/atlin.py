@@ -7,9 +7,10 @@ import json
 from jsonschema import validate
 from . import atlin_schemas as schemas
 import time
+from uuid import uuid4, UUID
 
 logging.basicConfig(level=logging.DEBUG)
-
+        
 class JobStatus:
     def __init__(self) -> None:
         for item in schemas._valid_job_status:
@@ -42,7 +43,7 @@ class AtlinBase(ABC):
     def _request_delete(self, url, headers, params, body):
         try:
             logging.debug(f"Making a delete request.\nurl: {url}\nheaders: {headers}\nparams: {params}")
-            response = requests.delete(url, params=params, headers=headers, data=body)
+            response = requests.delete(url, params=params, headers=headers, json=body)
             return response
         except Exception as e:
             logging.error(f"{__file__} {__name__}: {e}")
@@ -60,7 +61,7 @@ class AtlinBase(ABC):
     def _request_put(self, url, headers, params, body):
         try: 
             logging.debug(f"Making a put request.\nurl: {url}\nheaders: {headers}\nparams: {params}\ndata: {body}")
-            response=requests.put(url=url, headers=headers, params=params, data=body)
+            response=requests.put(url=url, headers=headers, params=params, json=body)
             return response
         except Exception as e:
             logging.error(f"{__name__}, line {getframeinfo(currentframe()).lineno}: {e}")
@@ -68,8 +69,8 @@ class AtlinBase(ABC):
     
     def _request_post(self, url, headers, params, body):
         try: 
-            logging.debug(f"Making a put request.\nurl: {url}\nheaders: {headers}\nparams: {params}\ndata: {body}")
-            response=requests.post(url=url, headers=headers, params=params, data=body)
+            logging.debug(f"Making a post request.\nurl: {url}\nheaders: {headers}\nparams: {params}\ndata: {body}")
+            response=requests.post(url=url, headers=headers, params=params, json=body)
             return response
         except Exception as e:
             logging.error(f"{__name__}, line {getframeinfo(currentframe()).lineno}: {e}")
@@ -84,18 +85,45 @@ class AtlinBase(ABC):
                 token_uid,
                 job_status,
                 social_platform,
-                job_tag = '',
+                job_tag = [],
                 output_path = '',
-                job_message = {},
+                job_message = '',
                 job_detail = {}):
         #TODO
-        raise NotImplementedError()
-        encoded_url = f"{self.url_api}/job"
-        print(locals())
-        return self._request_post(encoded_url, self._header_json, None, )
+        if job_status not in self._job_status.valid_values:
+            raise ValueError(f"{job_status} is not a valid status ({', '.join(self._job_status.valid_values)})")
         
+        if social_platform not in self._job_platforms.valid_values:
+            raise ValueError(f"{social_platform} is not a valid social platform ({', '.join(self._job_platforms.valid_values)})")
+        
+        if not isinstance(job_tag, list):
+            raise TypeError(f"{job_tag} should be a list of strings.")
+        job_tag = ",".join(job_tag)
+        
+        body = dict(
+            user_uid = user_uid,
+            token_uid = token_uid,
+            job_status = job_status,
+            social_platform = social_platform,
+            job_tag = job_tag,
+            output_path = output_path,
+            job_message = job_message,
+            job_detail = job_detail,
+        )
+        
+        encoded_url = f"{self.url_api}job"
+        return self._request_post(encoded_url, self._header_json, None, body=body)
+        
+        # raise NotImplementedError()
+        # encoded_url = f"{self.url_api}job"
+        # print(locals())
+        # return self._request_post(encoded_url, self._header_json, None, )
+    
+    def job_update(self,**kwargs):
+        pass
+    
     def job_delete(self, job_uid):
-        encoded_url = f"{self.url_api}/job/{job_uid}"
+        encoded_url = f"{self.url_api}job/{job_uid}"
         return self._request_delete(encoded_url, None, None, None)
     
     def job_get(self, user_uid: list = None, social_platform: list = None, job_status: list =None):
@@ -125,31 +153,42 @@ class AtlinBase(ABC):
         body = dict(job_status=job_status)
         return self._request_put(encoded_url, None, None, body)
     
-    def token_get(self, token_uid: str = None):
+    def token_get(self,
+                  user_uid : str = None,
+                  social_platform: str = None, 
+                  token_uid: str = None):
+        params = None
         if token_uid is None:
+            params={}
+            if user_uid is not None: 
+                params["user_uid"] = user_uid
+            if social_platform is not None: 
+                params["social_platform"] = social_platform
+            if params == {}:
+                params = None
             encoded_url = f"{self.url_api}token"
         else:
             encoded_url = f"{self.url_api}token/{token_uid}"
-        return self._request_get(encoded_url, self._header_json, None)
+        return self._request_get(encoded_url, self._header_json, params=params)
 
     def token_update(self, token_uid: str, token_details: dict):
         encoded_url = f"{self.url_api}token/{token_uid}"
-        return self._request_put(encoded_url, self._header_json, None, token_details)
+        return self._request_put(encoded_url, None, None, token_details)
     
     def token_delete(self, token_uid: str):
         encoded_url = f"{self.url_api}token/{token_uid}"
         return self._request_delete(encoded_url, None, None, None)
     
-    def token_create(self, token_uid:str, token_details: dict):
+    def token_create(self, user_uid:str, token_details: dict):
         encoded_url = f"{self.url_api}token"
-        return self._request_post(encoded_url, self._header_json, None, token_details)
+        return self._request_post(encoded_url, None, None, token_details)
     
     def token_set_quota(self, token_uid, social_platform: str, token_quota: int):
         encoded_url = f"{self.url_api}token/quota/{token_uid}"
         if social_platform not in JobPlatform().valid_values:
             raise ValueError(f"invalid social platform {social_platform}. Valid values are {','.join(JobPlatform().valid_values)}")
         body = dict(token_quota = token_quota, social_platform = social_platform)
-        return self._request_put(encoded_url, self._header_json, None, dict(token_quota=token_quota))
+        return self._request_put(encoded_url, self._header_json, None, body=body)
     
     
     
@@ -173,8 +212,7 @@ class AtlinYoutube(AtlinBase):
             job_status = self._job_status.created
         schema = schemas.schema_jobs_job_detail_get(self._job_platform.youtube, job_status)
         return schema
-            
-            
+           
 class AtlinReddit(AtlinBase):
     def __init__(self, domain: str):
         super().__init__(domain)

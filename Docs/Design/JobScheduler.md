@@ -121,15 +121,15 @@ For running jobs:
 ```json
 {
     "current_quota" : 1000, 
-    "quota_exceeded": true,
-    "api_key_valid" = A Boolean value,
-    "videos_ids" = A list of videos ids,
-    "comments_count" = A dictionary,
-    "actions" = A list of actions,
-    "all_videos_retrieved" = A Boolean value,
-    "all_comments_retrieved" = A Boolean value,
-    "error" = A Boolean vaue,
-    "error_description" : "string",
+    "quota_exceeded": True,
+    "api_key_valid" : True,
+    "videos_ids" :[],
+    "comments_count" : {},
+    "actions" : [],
+    "all_videos_retrieved" : True,
+    "all_comments_retrieved" : True,
+    "error"  : True,
+    "error_description" : "",
 }
 ```
 
