@@ -1,8 +1,15 @@
 import argparse
 import requests
 import logging
+import os
+import uuid
 
-from RedditUtils import *
+BASE_DIR ='/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/Tools/RedditAPITool/'
+
+import sys
+sys.path.insert(0, BASE_DIR)
+
+import RedditUtils 
 
 ####################################################################################################
 # Objects which are passed back as children in the response to a GET request contain objects.
@@ -30,6 +37,8 @@ class RedditAPISession:
     params_ = {}
     
     listOfResponses_ = []
+    
+    numRequest_ = 0
     
     #########################################################################
     # CONSTRUCTOR(S)
@@ -62,10 +71,7 @@ class RedditAPISession:
                                 auth=auth, 
                                 data=self.credientalsDict_, 
                                 headers=self.header_)
-        
-        # Check if there was an error message returned
-        self.check4ResponseError(resp.json(), True)
-        
+                
         # convert response to JSON and get access_token value
         TOKEN = resp.json()['access_token']
 
@@ -114,7 +120,7 @@ class RedditAPISession:
     def getSubredditPosts(  self,
                             jobDict):
         # Construct the urlSring for the GET request
-        urlString = API_BASE + 'r/'+jobDict['subreddit']+'/'+jobDict['sortBy']
+        urlString = RedditUtils.API_BASE + 'r/'+jobDict['subreddit']+'/'+jobDict['sortBy']
                
         # Submit Request
         return self.requestGet(urlString=urlString,
@@ -140,8 +146,8 @@ class RedditAPISession:
     ####################################################################################################
     # This function
     ####################################################################################################
-    def exctractParams(self,
-                       jobDict):
+    def extractParams(  self,
+                        jobDict):
 
         self.params_['sortBy'] = jobDict['sortBy']
         self.params_['limit'] = jobDict['n']
@@ -174,14 +180,16 @@ class RedditAPISession:
     def requestGet(self,
                    urlString,
                    numResultsRequested):
-                       
+        
+        sucessFlag = False
+                    
         responseList = []
 
-        if numResultsRequested > MAX_NUM_RESPONSES_TOTAL:
-            numResultsRequested = MAX_NUM_RESPONSES_TOTAL
+        if numResultsRequested > RedditUtils.MAX_NUM_RESPONSES_TOTAL:
+            numResultsRequested = RedditUtils.MAX_NUM_RESPONSES_TOTAL
 
         # calculate floor division
-        performNumRequests = numResultsRequested // MAX_NUM_RESPONSES_PER_REQUEST
+        performNumRequests = numResultsRequested // RedditUtils.MAX_NUM_RESPONSES_PER_REQUEST
         if performNumRequests == 0:
             performNumRequests = 1
                       
@@ -189,84 +197,141 @@ class RedditAPISession:
         for i in range(0, performNumRequests):
 
             self.params_['after'] = afterID        
-            
-            resp = requests.get(url=urlString,
-                                headers = self.header_,
-                                params = self.params_,
-                                timeout=REQUEST_GET_TIMEOUT)
- 
-            respDict = resp.json()
-            if isinstance(respDict,list):
-                respDict = resp.json()[0]               
+                        
+            try:
+                response = requests.get(url=urlString,
+                                    headers = self.header_,
+                                    params = self.params_,
+                                    timeout=RedditUtils.REQUEST_GET_TIMEOUT)
 
-            responseList.append(respDict) 
+                if response.status_code == 200:
+                    
+                    sucessFlag = True
+                    respJSON = response.json()
+                                    
+                    for resp in respJSON['data']['children']:                     
+                        responseList.append(resp) 
 
-            if not self.check4ResponseError(respDict):
-                if len(respDict['data']['children']) > 0:
-                    afterID = respDict['data']['children'][-1]['data']['name']
+                        
+                    if len(respJSON['data']['children']) > 0:
+                        afterID = respJSON['data']['children'][-1]['data']['name']
+                         
+            except Exception as e:
+                print(e)
+           
 
-        return responseList
+        # Store the results in the correct member
+        self.listOfResponses_ = responseList
+
+        # Store thenumber of requests made so # of request per minute can be monitored
+        self.numRequest_ = performNumRequests
+        
+        return sucessFlag
     
     ####################################################################################################
     # This function handles 'subreddit' type jobs
-    def handleSubRedditJob(self, jobDict):
-        listOfResponseJSON = [] 
+    def handleSubRedditJob(self, jobDict) -> bool:
         
+        successFlag = None
+              
         if jobDict['getposts'] == 1: 
-            listOfResponseJSON = self.getSubredditPosts(jobDict)
+            successFlag = self.getSubredditPosts(jobDict)
         elif len(jobDict['keyword']) > 0:
-            listOfResponseJSON = self.getSubredditKeywordSearch(  jobDict)
+            successFlag = self.getSubredditKeywordSearch(  jobDict)
         else:
             logging.warning('[WARNING]: HandlejobDict: No ACTION specified for subreddit',flush=True)  
-                
-        return listOfResponseJSON    
-    
+            successFlag = False
+            
+        return successFlag
+                    
     ####################################################################################################
     # This function handles 'user' type jobs
-    def handleUserJob(self, jobDict):
-        listOfResponseJSON = [] 
+    def handleUserJob(self, jobDict) -> bool:
+        
+        successFlag = None
         
         if jobDict['getposts'] == 1:
-            listOfResponseJSON = self.getUserPosts(jobDict)
+            successFlag = self.getUserPosts(jobDict)
         elif jobDict['getcomments'] == 1:
-            listOfResponseJSON = self.getUserComments(jobDict)
+            successFlag = self.getUserComments(jobDict)
         else:
             logging.warning('[WARNING]: HandlejobDict: No ACTION specified for user',flush=True)
+            successFlag = False
         
-        return listOfResponseJSON    
-    
+        return successFlag
     ####################################################################################################
     # This function handles 'post' type jobs
-    def handlePostJob(self, jobDict):
-        listOfResponseJSON = [] 
+    def handlePostJob(self, jobDict) -> bool:
         
-        listOfResponseJSON = self.getCommentsFromPost(jobDict)
+        successFlag = None
+        try:
+            self.getCommentsFromPost(jobDict)          
+            successFlag = True
+        except:
+            successFlag = False
         
-        return listOfResponseJSON 
+        return successFlag
         
     ####################################################################################################
     # This function performs the API call which is described in the jobDict dictionary.
-    def HandleJobDict(self, jobDict):
-        self.exctractParams(jobDict)
+    def HandleJobDict(self, jobDict) -> None:
         
-        # All the get functions will return a JSON data structure containing the results
-        listOfResponseJSON = [] 
-  
+        successFlag = False
+        
+        self.extractParams(jobDict)
+                
         # This block of code calls the API command which is described in the jobDict          
         if jobDict['subreddit'] != None:
-            listOfResponseJSON = self.handleSubRedditJob(jobDict)
+            successFlag = self.handleSubRedditJob(jobDict)
+        
         elif jobDict['user'] != None:
-            listOfResponseJSON =self.handleUserJob(jobDict)       
-        elif  jobDict['post'] != None:
-            listOfResponseJSON = self.handlePostJob(jobDict)
-        else:
-            logging.warning('[WARNING]: HandlejobDict: No ITEM ID specified.',flush=True)  
+            successFlag = self.handleUserJob(jobDict)       
             
-        return listOfResponseJSON
+        elif  jobDict['post'] != None:
+            successFlag = self.handlePostJob(jobDict)
+        else:
+            logging.warning('[WARNING]: HandlejobDict: No ITEM ID specified.')  
+        
+        return successFlag
     
     ####################################################################################################
+    # Get number of requests sent for the last job
+    def SaveResponses(self,
+                      folderPath : str) -> bool:
+        
+        successFlag = False
+        
+        # check if the file path exists and is accessbile then write the listOfResponses_ to the file
+        if os.path.exists(folderPath):          
+            filename = str(uuid.uuid1())+'.json'
+            
+            filePath = os.path.join(folderPath, filename)
+            file = open(filePath, "w")
+            
+            listOrResponses = self.GetResponses()
+            for responseJSON in listOrResponses:
+                
+                file.write(str(responseJSON['data']))
+            
+            file.close()     
+            
+            successFlag = True   
+            
+        return successFlag
+    
+    ####################################################################################################
+    # Get the list of responses from the last Request
+    def GetResponses(self) -> list:
+        return self.listOfResponses_
+           
+    ####################################################################################################
+    # Get number of requests sent for the last job
+    def GetNumberOfRequests(self) -> int:
+        return self.numRequest_
+       
+    ####################################################################################################
     #
-    def End():
+    def End(arg1):
         # TODO: do stuff here to end the session cleanly
         logging.debug('END SESSION')
         
@@ -279,16 +344,10 @@ class RedditAPISession:
 
 # TODO: Change --getPosts and --getComments so they dont require arguments (nrgs = 0?)
 # TODO: Check if --post --getComments returns all comments
-# TODO: add functionality for saving the data to a file
 # TODO: add functionality for printing retrieved data to the screen
 
 # Example command line calls:
-# python RedditAPISession.py --subreddit 'python' --getposts 1
-# python RedditAPISession.py --subreddit 'python' --keyword ide
-# python RedditAPISession.py --user pmz --getcomments 1
-# python RedditAPISession.py --user pmz --getposts 1
-# python RedditAPISession.py --post 13e5oxw --getcomments 1
-
+#python RedditAPISession.py --subreddit 'canada' --getposts 1 --n 1 --sortBy new
 def ExtractCommandLineArgs() :
     parser = argparse.ArgumentParser()
 
@@ -297,7 +356,7 @@ def ExtractCommandLineArgs() :
     # Return options
     parser.add_argument('--sortBy',default='top')
     parser.add_argument('--timeFrame',default='all')
-    parser.add_argument('--n', type=int,default=MAX_NUM_RESPONSES_TOTAL)
+    parser.add_argument('--n', type=int,default=RedditUtils.MAX_NUM_RESPONSES_TOTAL)
 
     # Items
     items = parser.add_mutually_exclusive_group(required=True)
@@ -333,19 +392,14 @@ if __name__ == '__main__':
     jobDict = ExtractCommandLineArgs()    
     
     # collect all the responses generated by the RedditInterface named session
-    listOfResponsesJSON = session.HandleJobDict(jobDict)   
-          
-    #now do something with thre responses
-    numResponses = 0
-    for responseJSON in listOfResponsesJSON:
-        numResponses += len(responseJSON['data']['children'])
-        for aPost in responseJSON['data']['children']:
+    if session.HandleJobDict(jobDict):
+  
+        #now do something with thre responses
+        numResponses = 0
+        for responseJSON in session.GetResponses():
+            print(responseJSON)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ POST DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            #DisplayDict(aPost['data'], COMMENT_KEYS_OF_INTEREST)
-            DisplayDict(aPost['data'], POST_KEYS_OF_INTEREST)
+            RedditUtils.DisplayDict(responseJSON['data'], RedditUtils.POST_KEYS_OF_INTEREST)
             input()    
     
-# API call to:
-# 1. get user credentials from the User Table
-# 2. update an entry in the Job Table (status, location of output file)
-            
+           

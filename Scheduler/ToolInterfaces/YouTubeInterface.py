@@ -171,31 +171,10 @@ def PerformYouTubeAPICall(sqliteCursor, jobDict):
 ####################################################################################################
 #
 ####################################################################################################
-def YouTubeInterface(dataBaseFilename, jobDict):
+def YouTubeInterface(obDict):
 
     logger.info('Performing YouTube job:')
     logger.info(jobDict)
-
-    # Set up connection to database
-    #dataBaseConnection = sqlite3.connect(dataBaseFilename)
-    #dataBaseConnection.row_factory = sqlite3.Row
-    #sqliteCursor = dataBaseConnection.cursor()
-
-    # Set the job status to "IN PROG"
-    #SetJobStatus(dataBaseConnection, sqliteCursor, jobDict['id'], '\'INPROG\'')
-
-    # make the reddit API call
-    sqliteCursor = None
-    listOfResponsesJSON = PerformYouTubeAPICall(sqliteCursor, jobDict)
-
-
-
-    # save the output to a file
-    #filePath = SaveOutput(listOfResponsesJSON)
-
-    # update the dataFilePath to "<filepath>" and the job status to "DONE"
-    #SetOutputFilePath(dataBaseConnection, sqliteCursor, jobDict['id'], filePath)
-    #SetJobStatus(dataBaseConnection, sqliteCursor, jobDict['id'], '\'DONE\'')
 
     return
 
@@ -206,4 +185,4 @@ jobDict = {"status": "NewJob", "option": "query", "actions": ["metadata", "comme
 #jobDict = {"status": "NewJob", "option": "query", "actions": ["comments"], "input" : "pao de queijo liquidificador", "videos": 50}
 
 
-YouTubeInterface("", jobDict)
+# YouTubeInterface("", jobDict)

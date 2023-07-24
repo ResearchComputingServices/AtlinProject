@@ -12,6 +12,7 @@ def schema_token_put():
         "required": ["social_platform"],
     }
 
+# JSON structure describing the EXPECTED response structure
 def schema_jobs_get(social_platform = None, job_status = None):
     job_details = schema_jobs_job_detail_get(social_platform=social_platform, job_status=job_status)
     token_detail = schema_jobs_token_details_get()
