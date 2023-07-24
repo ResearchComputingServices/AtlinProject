@@ -12,7 +12,7 @@ Docs/rcs-sm-db-backup.sql
 sqlfix
 .venv
 *.DS_Store
-
+AtlinAPI/AtlinAPI/.DS_Store
 *_test.py
 
 Output/
