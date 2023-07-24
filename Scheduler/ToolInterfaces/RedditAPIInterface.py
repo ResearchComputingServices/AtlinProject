@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, BASE_DIR)
 
 from Tools.RedditAPITool.RedditAPISession import RedditAPISession
-from AtlinAPI.AtlinAPI.atlin import *
+from AtlinAPI.AtlinAPI import *
 
 ####################################################################################################
 #
@@ -98,19 +98,24 @@ def RedditInterface(jobJSON):
  #############################################################################################
  # Test Code:
 if __name__ == '__main__':     
+
+    dataBaseDomain = "http://localhost:6010"
+    atlin = AtlinReddit(dataBaseDomain)
+
+    response = atlin.job_get_by_uid('9978d901-96e6-4a80-bfec-3a7dd87d81ab')
     
-    job_detail = {}
-    job_detail['sortBy'] = 'top'
-    job_detail['timeFrame'] = 'all'
-    job_detail['subreddit'] = 'canada'
-    job_detail['getposts'] = 1
-    job_detail['n'] = 1
-    # job_detail[''] = ''
+
+    aRedditJob = RedditJobDetails()
+    aRedditJob.subreddit = 'canada'
+    aRedditJob.getposts = '1'
+    aRedditJob.n = 100
     
-    jobJSON = {}  
-    
-    jobJSON['job_detail'] = job_detail
-    jobJSON['token_uid'] = 'asdfasdf121234'
-    # jobJSON[''] = ''
-    
-    RedditInterface(jobJSON)
+    print(aRedditJob.to_dict())
+
+    myToken = RedditToken()
+
+    myToken.social_platform = 'reddit'
+    myToken.token_uid
+
+
+    #RedditInterface(jobJSON)
