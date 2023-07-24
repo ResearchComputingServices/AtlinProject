@@ -255,6 +255,7 @@ def resume_job():
         yt.state.error_description = ""
         yt.state.quota_exceeded = False
         extension = "xlsx"
+        print ("Delete")
 
         #Validate path
         #atlin_yt_job.job.output_path = "/Users/jazminromero/development/AtlinProject/Output/YouTube"
