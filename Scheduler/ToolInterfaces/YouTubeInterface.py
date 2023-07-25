@@ -303,64 +303,65 @@ def extract_jobs(response):
 #
 ####################################################################################################
 def YouTubeInterface(job):
+    try:
+        logger.info('Creating API class')
+        print ("I started the job...")
 
-    logger.info('Creating API class')
+        #Create a class for the AtlinYoutube
+        #ToDo: Ask question: Is this the best place to put these statements?
 
-    #Create a class for the AtlinYoutube
-    #ToDo: Ask question: Is this the best place to put these statements?
+        global atlin_yt_job
+        atlin_yt_job= AtlinYouTubeJob("http://localhost:6010")    #ToDo: ####---> Question: From where do I get this address?
 
-    global atlin_yt_job
-    atlin_yt_job= AtlinYouTubeJob("http://localhost:6010")    #ToDo: ####---> Question: From where do I get this address?
+        global job_status
+        job_status = atlinAPI.JobStatus()
 
-    global job_status
-    job_status = atlinAPI.JobStatus()
-
-    global job_platform
-    job_platform = atlinAPI.JobPlatform()
-
-
-    #For testing only +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    response = atlin_yt_job.job_get(job_status=[job_status.created])
-    if response.status_code == 200:
-        jobs = response.json()
-    job = jobs[0]
-    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-    atlin_yt_job.job = atlinJob.Job(job)
-
-    logger.info('Performing YouTube job:')
-    logger.info(job)
-
-    #Get token information (api token and quota)
-    #response = atlin_job.token_get(atlin_job.token_uid)
-    response = atlin_yt_job.token_get(token_uid=atlin_yt_job.job.token_uid)
-
-    if response.status_code == 200:
-        try:
-            atlin_yt_job.token.from_json(response.json())
-        except Exception as e:
-            print(f"Could not fetch token quota. {e}")
-            #exit()
-            #ToDo: Handle this scenario
-
-    if response.status_code != 200:
-        print("Report error to scheduler")
-
-    #ToDo: Verify that there isn't another job already running  with the same token_uid
-
-    if atlin_yt_job.job.job_status == "CREATED":
-        job_status_completed = handle_new_job()
-    elif atlin_yt_job.job.job_status == "PAUSED":
-        job_status_completed = resume_job()
-
-    return job_status_completed
+        global job_platform
+        job_platform = atlinAPI.JobPlatform()
 
 
+        #For testing only +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        #response = atlin_yt_job.job_get(job_status=[job_status.created])
+        #if response.status_code == 200:
+        #    jobs = response.json()
+        #job = jobs[0]
+        #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+        atlin_yt_job.job = atlinJob.Job(job)
 
+        logger.info('Performing YouTube job:')
+        logger.info(job)
+
+        #Get token information (api token and quota)
+        #response = atlin_job.token_get(atlin_job.token_uid)
+        response = atlin_yt_job.token_get(token_uid=atlin_yt_job.job.token_uid)
+
+        if response.status_code == 200:
+            try:
+                atlin_yt_job.token.from_json(response.json())
+            except Exception as e:
+                print(f"Could not fetch token quota. {e}")
+                #exit()
+                #ToDo: Handle this scenario
+
+        if response.status_code != 200:
+            print("Report error to scheduler")
+
+        #ToDo: Verify that there isn't another job already running  with the same token_uid
+
+        if atlin_yt_job.job.job_status == "CREATED":
+            job_status_completed = handle_new_job()
+        elif atlin_yt_job.job.job_status == "PAUSED":
+            job_status_completed = resume_job()
+
+        return job_status_completed
+    except:
+        ex = traceback.format_exc()
+        print (ex)
+        
 ################################################
 #jobDict = {"status": "NewJob", "option": "video", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/watch?v=-DkpWjlJQIY", "videos": 0}
 #jobDict = {"status": "NewJob", "option": "playlist", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/playlist?list=PLADighMnAG4DczAOY7i6-nJhB9sQDhIoR", "videos": 0}
 #jobDict = {"status": "NewJob", "option": "query", "actions": ["metadata", "comments"], "input" : "pao de queijo minero", "videos": 50}
-jobDict = {"status": "NewJob", "option": "query", "actions": ["comments"], "input" : "pao de queijo liquidificador", "videos": 50}
-YouTubeInterface(jobDict)
+#jobDict = {"status": "NewJob", "option": "query", "actions": ["comments"], "input" : "pao de queijo liquidificador", "videos": 50}
+#YouTubeInterface(jobDict)
