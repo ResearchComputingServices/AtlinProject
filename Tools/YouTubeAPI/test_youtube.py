@@ -47,7 +47,7 @@ if option == "video":
     url = "https://www.youtube.com/watch?v=ZU_wbPigVRI"
     if action == "metadata":
         r =yt.get_video_metadata_for_url(url)
-        #save_file(yt.videos.video_records, "output", output_file)
+        save_file(yt.videos.video_records, "output", output_file)
     else:
         r= yt.get_video_comments_for_url(url)
         #save_file(yt.comments.comments_records,"output", output_file)
