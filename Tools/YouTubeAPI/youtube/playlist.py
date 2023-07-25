@@ -121,7 +121,12 @@ class Playlist(object):
                     if not nextPageToken:
                         break
                 else:
+                    self._youtube.state.quota_exceeded = True
+                    st = log_format("_get_playlist_videos_ids","Out of quota")
+                    logger.error(st)
+                    self._youtube.state.set_error_description(True, msg)
                     break
+
         except HttpError as error:
             self._youtube.state.quota_exceeded = is_quota_exceeded(error)
             msg = get_HTTP_error_msg(error)

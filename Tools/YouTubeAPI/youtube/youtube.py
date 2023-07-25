@@ -30,7 +30,7 @@ class Youtube:
 
         self.state = State(self,current_quota)
 
-        self.__test_service()
+        #self.__test_service()
 
     def login(self):
         logger.debug(f"Should login using the api_key {self._apikey}")
