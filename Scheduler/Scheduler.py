@@ -183,9 +183,9 @@ if __name__ == '__main__':
         
     js = JobScheduler(waitTime=500)
     
-    js.AddJobType('reddit', RedditInterface)
-    js.AddJobType('youtube', YouTubeInterface)
-    js.AddJobType('crawl', CrawlerInterface)
+    js.AddJobType('REDDIT', RedditInterface)
+    js.AddJobType('YOUTUBE', YouTubeInterface)
+    js.AddJobType('CRAWL', CrawlerInterface)
     
     js.Run()
     

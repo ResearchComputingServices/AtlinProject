@@ -1,16 +1,12 @@
 import logging
-import os
 from pathlib import Path
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
-
-import sys
 sys.path.insert(0, BASE_DIR)
 
 from Tools.RedditAPITool.RedditAPISession import RedditAPISession
 from AtlinAPI.AtlinAPI import *
-#from Scheduler.Utils import *
-
 
 ####################################################################################################
 #

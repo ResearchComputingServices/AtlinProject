@@ -1,6 +1,4 @@
 import os
-import json
-import uuid
 from pathlib import Path
 
 WAIT_TIME = 10 # Amount of time to sleep before checking the data base for new jobs

@@ -4,10 +4,9 @@ import logging
 import os
 import uuid
 from pathlib import Path
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
-
-import sys
 sys.path.insert(0, BASE_DIR)
 
 from RedditAPITool.RedditUtils import *
@@ -121,7 +120,7 @@ class RedditAPISession:
     def getSubredditPosts(  self,
                             jobDict):
         # Construct the urlSring for the GET request
-        urlString = RedditUtils.API_BASE + 'r/'+jobDict['subreddit']+'/'+jobDict['sortBy']
+        urlString = API_BASE + 'r/'+jobDict['subreddit']+'/'+jobDict['sortBy']
                
         # Submit Request
         return self.requestGet(urlString=urlString,
@@ -186,11 +185,11 @@ class RedditAPISession:
                     
         responseList = []
 
-        if numResultsRequested > RedditUtils.MAX_NUM_RESPONSES_TOTAL:
-            numResultsRequested = RedditUtils.MAX_NUM_RESPONSES_TOTAL
+        if numResultsRequested > MAX_NUM_RESPONSES_TOTAL:
+            numResultsRequested = MAX_NUM_RESPONSES_TOTAL
 
         # calculate floor division
-        performNumRequests = numResultsRequested // RedditUtils.MAX_NUM_RESPONSES_PER_REQUEST
+        performNumRequests = numResultsRequested // MAX_NUM_RESPONSES_PER_REQUEST
         if performNumRequests == 0:
             performNumRequests = 1
                       
@@ -203,7 +202,7 @@ class RedditAPISession:
                 response = requests.get(url=urlString,
                                     headers = self.header_,
                                     params = self.params_,
-                                    timeout=RedditUtils.REQUEST_GET_TIMEOUT)
+                                    timeout= REQUEST_GET_TIMEOUT)
 
                 if response.status_code == 200:
                     
@@ -357,7 +356,7 @@ def ExtractCommandLineArgs() :
     # Return options
     parser.add_argument('--sortBy',default='top')
     parser.add_argument('--timeFrame',default='all')
-    parser.add_argument('--n', type=int,default=RedditUtils.MAX_NUM_RESPONSES_TOTAL)
+    parser.add_argument('--n', type=int,default=MAX_NUM_RESPONSES_TOTAL)
 
     # Items
     items = parser.add_mutually_exclusive_group(required=True)
