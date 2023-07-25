@@ -3,13 +3,14 @@ import requests
 import logging
 import os
 import uuid
+from pathlib import Path
 
-BASE_DIR ='/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/Tools/RedditAPITool/'
+BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
 
 import sys
 sys.path.insert(0, BASE_DIR)
 
-import RedditUtils 
+from RedditAPITool.RedditUtils import *
 
 ####################################################################################################
 # Objects which are passed back as children in the response to a GET request contain objects.
@@ -380,11 +381,7 @@ def ExtractCommandLineArgs() :
 if __name__ == '__main__':
     
     credientalsDict = {}
-    credientalsDict['grant_type'] = 'password'
-    credientalsDict['CLIENT_ID'] = '_-W7ANd6UN4EXexvgHn8DA'
-    credientalsDict['SECRET_TOKEN'] = 'kpBdT1f-nRHM_kxdBzmxoOnDo_96FA'
-    credientalsDict['username'] = 'nickshiell'
-    credientalsDict['password'] =  'Q!w2e3r4'
+
         
     session = RedditAPISession(credientalsDict)
     

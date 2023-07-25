@@ -1,11 +1,12 @@
 import concurrent.futures
 import time
 from itertools import repeat
-
+from pathlib import Path
 from typing import Callable, List
-
 import sys
-sys.path.insert(0, '/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/')
+
+BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
+sys.path.insert(0, BASE_DIR)
 
 from AtlinAPI.AtlinAPI.atlin import *
 

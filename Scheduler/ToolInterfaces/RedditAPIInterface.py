@@ -1,14 +1,16 @@
 import logging
+import os
+from pathlib import Path
 
-BASE_DIR ='/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/'
-
-#from Scheduler.Utils import *
+BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
 
 import sys
 sys.path.insert(0, BASE_DIR)
 
 from Tools.RedditAPITool.RedditAPISession import RedditAPISession
 from AtlinAPI.AtlinAPI import *
+#from Scheduler.Utils import *
+
 
 ####################################################################################################
 #

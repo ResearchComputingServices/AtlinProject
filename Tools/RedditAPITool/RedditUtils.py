@@ -6,9 +6,6 @@ from colorama import Fore, Back, Style
 ####################################################################################################
 
 
-BASE_DIR = '/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/'
-REDDIT_API_BASE_DIR = '/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/Tools/RedditAPI'
-
 API_BASE = 'https://oauth.reddit.com/'
 
 POST_KEYS_OF_INTEREST = [   'subreddit',
