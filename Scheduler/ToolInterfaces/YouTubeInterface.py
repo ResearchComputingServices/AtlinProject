@@ -255,7 +255,6 @@ def resume_job():
         yt.state.error_description = ""
         yt.state.quota_exceeded = False
         extension = "xlsx"
-        print ("Delete")
 
         #Validate path
         #atlin_yt_job.job.output_path = "/Users/jazminromero/development/AtlinProject/Output/YouTube"
@@ -311,7 +310,7 @@ def YouTubeInterface(job):
     #ToDo: Ask question: Is this the best place to put these statements?
 
     global atlin_yt_job
-    atlin_yt_job= AtlinYouTubeJob("http://localhost:6010")    ####---> Question: From where do I get this address?
+    atlin_yt_job= AtlinYouTubeJob("http://localhost:6010")    #ToDo: ####---> Question: From where do I get this address?
 
     global job_status
     job_status = atlinAPI.JobStatus()
@@ -321,7 +320,6 @@ def YouTubeInterface(job):
 
 
     #For testing only +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #response = atlin_job.job_get(job_status=[job_status.created, job_status.paused])
     response = atlin_yt_job.job_get(job_status=[job_status.created])
     if response.status_code == 200:
         jobs = response.json()
