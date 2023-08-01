@@ -208,17 +208,17 @@ def handle_new_job():
                 response_list.append(response)
 
         if option == "QUERY":
+
+            videos = atlin_yt_job.job.job_detail.job_submit.video_count
             for action in actions:
-                #videos = jobDict["videos"]
-                videos = 100   #ToDo: Get this value from API
                 filename = atlin_yt_job.job.job_uid + "_" + action
                 filename = utils.get_filename(filename, extension)
 
                 if action == "METADATA":
-                    response_list.append(yt.get_videos_metadata_from_query(input, videos))
+                    response = yt.get_videos_metadata_from_query(input, videos)
                     utils.save_file(response, atlin_yt_job.job.output_path, filename)
                 else:
-                    response_list.append(yt.get_videos_comments_from_query(input, videos))
+                    response = yt.get_videos_comments_from_query(input, videos)
                     utils.save_file(response, atlin_yt_job.job.output_path, filename)
 
                 # An error occurred while doing the above action or the quota exceeded we cannot continue executing actions
@@ -306,7 +306,7 @@ def extract_jobs(response):
 def YouTubeInterface(job):
     try:
         logger.info('Creating API class')
-        print ("I started the job...")
+        print ("Starting job...")
 
         #Create a class for the AtlinYoutube
         #ToDo: Ask question: Is this the best place to put these statements?
@@ -322,10 +322,10 @@ def YouTubeInterface(job):
 
 
         #For testing only +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        response = atlin_yt_job.job_get(job_status=[job_status.created])
-        if response.status_code == 200:
-            jobs = response.json()
-        job = jobs[0]
+        #response = atlin_yt_job.job_get(job_status=[job_status.created])
+        #if response.status_code == 200:
+        #    jobs = response.json()
+        #job = jobs[0]
         #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         atlin_yt_job.job = atlinJob.Job(job)
@@ -364,5 +364,5 @@ def YouTubeInterface(job):
 #jobDict = {"status": "NewJob", "option": "video", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/watch?v=-DkpWjlJQIY", "videos": 0}
 #jobDict = {"status": "NewJob", "option": "playlist", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/playlist?list=PLADighMnAG4DczAOY7i6-nJhB9sQDhIoR", "videos": 0}
 #jobDict = {"status": "NewJob", "option": "query", "actions": ["metadata", "comments"], "input" : "pao de queijo minero", "videos": 50}
-jobDict = {"status": "NewJob", "option": "query", "actions": ["comments"], "input" : "pao de queijo liquidificador", "videos": 50}
-YouTubeInterface(jobDict)
+#jobDict = {"status": "NewJob", "option": "query", "actions": ["comments"], "input" : "pao de queijo liquidificador", "videos": 50}
+#YouTubeInterface(jobDict)
