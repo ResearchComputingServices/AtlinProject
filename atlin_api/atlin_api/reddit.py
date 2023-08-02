@@ -1,12 +1,12 @@
 """Reddit related classes."""
-
 import json
 import logging
+from .job_details import JobDetail
 
 logger = logging.getLogger("RedditJobDetails")
 
 
-class RedditJobDetails:
+class RedditJobDetails(JobDetail):
     """Reddit Job Details class."""
 
     _valid_option_type = ["POST", "SUBREDDIT", "USER"]
@@ -14,7 +14,8 @@ class RedditJobDetails:
     _valid_timeframe = ["all", "year", "month", "week", "today", "now"]
     _valid_actions = ["POST", "COMMENT", "KEYWORD"]
 
-    def __init__(self, data: json = None):
+    def __init__(self, data: dict = None, **kwargs):
+        super().__init__(**kwargs)
         if data is not None:
             self.from_json(data)
 
@@ -163,6 +164,7 @@ class RedditJobDetails:
     def to_dict(self):
         """convert to dictionary"""
         return {
+            "job_name": getattr(self, "job_name"),
             "job_submit": {
                 "option_type": self.option_type,
                 "post_list": self.post_list,

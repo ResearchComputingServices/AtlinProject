@@ -1,11 +1,11 @@
 """Job related classes"""
-from abc import ABC
 import json
 from json.decoder import JSONDecodeError
 import os
 import logging
 from uuid import UUID, uuid4
 from .youtube import YoutubeJobDetails
+from .reddit import RedditJobDetails
 from .atlin import JobStatus, JobPlatform
 
 
@@ -206,7 +206,7 @@ class Job:
         if self.social_platform == "YOUTUBE":
             value = YoutubeJobDetails(data=value)
         elif self.social_platform == "REDDIT":
-            raise NotImplementedError("Reddit job details not implemented.")
+            value = RedditJobDetails(data=value)
 
         setattr(self, "_job_detail", value)
 
@@ -222,19 +222,19 @@ class Job:
                 raise exc
 
         return {
-            'job_uid': getattr(self, "job_uid"),
-            'user_uid': getattr(self, "user_uid"),
-            'token_uid': getattr(self, "token_uid"),
-            'job_name': getattr(self, "job_name"),
-            'job_tag': getattr(self, "job_tag"),
-            'job_status': getattr(self, "job_status"),
-            'social_platform': getattr(self, "social_platform"),
-            'create_date': getattr(self, "create_date"),
-            'modify_date': getattr(self, "modify_date"),
-            'complete_date': getattr(self, "complete_date"),
-            'output_path': getattr(self, "output_path"),
-            'job_message': getattr(self, "job_message"),
-            'job_detail': job_detail,
+            "job_uid": getattr(self, "job_uid"),
+            "user_uid": getattr(self, "user_uid"),
+            "token_uid": getattr(self, "token_uid"),
+            "job_name": getattr(self, "job_name"),
+            "job_tag": getattr(self, "job_tag"),
+            "job_status": getattr(self, "job_status"),
+            "social_platform": getattr(self, "social_platform"),
+            "create_date": getattr(self, "create_date"),
+            "modify_date": getattr(self, "modify_date"),
+            "complete_date": getattr(self, "complete_date"),
+            "output_path": getattr(self, "output_path"),
+            "job_message": getattr(self, "job_message"),
+            "job_detail": job_detail,
         }
 
     def to_json(self):
@@ -251,62 +251,3 @@ class Job:
 
         for key in data.keys():
             setattr(self, key, data[key])
-
-
-class JobDetail(ABC):
-    """holds the base structure for jobdetails"""
-
-    def __init__(
-        self, *, job_name: str = None, job_submit: dict = None, job_resume: dict = None
-    ) -> None:
-        if job_name is not None:
-            setattr(self, "job_name", job_name)
-        if job_submit is not None:
-            setattr(self, "job_submit", job_submit)
-        if job_resume is not None:
-            setattr(self, "job_resume", job_resume)
-
-    @property
-    def job_name(self):
-        """job name"""
-        return getattr(self, "_job_name", "")
-
-    @job_name.setter
-    def job_name(self, value):
-        if not isinstance(value, str):
-            raise TypeError(
-                f"job_name should be a string, but {type(value)} was provided."
-            )
-        setattr(self, "_job_name", value)
-
-    @property
-    def job_details(self):
-        """job details"""
-        return getattr(self, "_job_details", {})
-
-    @job_details.setter
-    def job_details(self, value):
-        if isinstance(value, dict):
-            setattr(self, "_job_details", value)
-        else:
-            try:
-                setattr(self, "_job_details", value.to_dict())
-            except AttributeError as exc:
-                logger.error(("Could not convert value to dictionary. %s}", value))
-                raise exc
-
-    @property
-    def job_resume(self):
-        """job resume"""
-        return getattr(self, "_job_resume", {})
-
-    @job_resume.setter
-    def job_resume(self, value):
-        if isinstance(value, dict):
-            setattr(self, "_job_details", value)
-        else:
-            try:
-                setattr(self, "_job_details", value.to_dict())
-            except AttributeError as exc:
-                logger.error(("Could not convert value to dictionary. %s}", value))
-                raise exc

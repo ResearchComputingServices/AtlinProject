@@ -3,11 +3,11 @@ import json
 from json.decoder import JSONDecodeError
 from uuid import uuid4
 import logging
-from atlin_api import JobStatus, JobPlatform, Atlin, YoutubeToken
-from atlin_api import YoutubeJobDetails
+from atlin_api import JobStatus, JobPlatform, Atlin, YoutubeToken, RedditToken
+from atlin_api import YoutubeJobDetails, RedditJobDetails
 from atlin_api import Job
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG)
 
 
 # valid values from test database
@@ -115,12 +115,12 @@ response = atlin.job_create(
     job_status=JobStatus.created,
     social_platform=JobPlatform.youtube,
     job_tag=["tag1", "tag2"],
-    job_detail=youtube_job_details.to_dict()
+    job_detail=youtube_job_details.to_dict(),
 )
 response.raise_for_status()
 if response:
     try:
-        logging.debug("Job with uid %s created.",response.json()['job_uid'])
+        logging.debug("Job with uid %s created.", response.json()["job_uid"])
         logging.debug("%s", json.dumps(response.json(), indent=2))
         job = Job(response.json())
     except JSONDecodeError as exc:
@@ -192,3 +192,62 @@ response = atlin.job_delete(job.job_uid)
 if response:
     logging.debug("Deleted job with job_uid '%s'", job.job_uid)
 response.raise_for_status()
+
+#-----------------------------------------------------------------
+#                         Reddit tests
+#-----------------------------------------------------------------
+
+# build a RedditToken object
+token_reddit = RedditToken()
+token_reddit.user_uid = USER_UID
+token_details_reddit = {
+    "client_id": "some_random_id",
+    "secret_token": str(uuid4()),
+    "username": "Some username",
+    "password": "The password",
+    "token_quota": 350,
+    "modify_date": "",
+}
+
+token_reddit.token_detail = token_details_reddit
+logging.debug("Reddit token: \n%s", token_reddit.to_dict())
+
+# create the token in the backend
+response = atlin.token_create(token_details=token_reddit.to_dict())
+response.raise_for_status()
+if response.status_code == 201:
+    token_reddit.from_json(response.json())
+
+#create a Reddit Job
+reddit_job_details = RedditJobDetails()
+logging.debug(json.dumps(reddit_job_details.to_dict(), indent=2))
+
+response = atlin.job_create(
+    user_uid = USER_UID,
+    token_uid = token_reddit.token_uid,
+    job_status = JobStatus.created,
+    social_platform = JobPlatform.reddit,
+    job_tag = ['tag1', 'politics', 'education'],
+    job_detail = reddit_job_details.to_dict(),
+)
+response.raise_for_status()
+if response:
+    try:
+        reddit_job = Job(response.json())
+        logging.debug("Reddit job created successfully.\n%s",
+                      json.dumps(reddit_job.to_dict(), indent=2))
+    except Exception as exc:
+        logging.error("Could not load response for reddit job.")
+        raise exc
+
+# delete reddit job from backend
+response = atlin.job_delete(reddit_job.job_uid)
+response.raise_for_status()
+if response:
+    logging.debug("Deleted job %s", reddit_job.job_uid)
+
+# delete token from backend
+response = atlin.token_delete(token_uid=token_reddit.token_uid)
+response.raise_for_status()
+if response:
+    logging.debug("Deleted token with uid: %s", token_reddit.token_uid)

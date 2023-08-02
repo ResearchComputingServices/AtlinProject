@@ -149,7 +149,7 @@ class YoutubeToken(Token):
 
     def __init__(self, data: json = None):
         super().__init__(data)
-        self.social_platform = "YOUTUBE"
+        self.social_platform = JobPlatform.youtube
 
     def required_token_details(self):
         """required token details"""
@@ -165,7 +165,7 @@ class RedditToken(Token):
 
     def __init__(self, data: json = None):
         super().__init__(data)
-        self.social_platform = "REDDIT"
+        self.social_platform = JobPlatform.reddit
 
     def required_token_details(self):
         return {
