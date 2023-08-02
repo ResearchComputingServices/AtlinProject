@@ -1,4 +1,3 @@
-import sqlite3
 from Tools.YouTubeAPI.youtube.youtube import *
 import traceback
 import Tools.YouTubeAPI.youtube.utils as utils
@@ -10,9 +9,11 @@ import atlin_api.atlin_api.job as atlinJob
 import atlin_api.atlin_api.token as atlinToken
 from pathlib import Path
 import os
+import random
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_DIR="OUTPUT_DATA"
+
 class AtlinYouTubeJob(atlinAPI.Atlin):
     def __init__(self, domain: str):
         super().__init__(domain)
@@ -121,6 +122,8 @@ def handle_state(yt):
 
     #Save the quota
     updated_quota = yt.state.current_quota
+    print ("Updated quota: ")
+    print(updated_quota)
     response = atlin_yt_job.token_set_quota(atlin_yt_job.token.token_uid, job_platform.youtube, updated_quota)
     if response.status_code!=200:
         print ("Report error to scheduler")
@@ -211,7 +214,9 @@ def handle_new_job():
 
             videos = atlin_yt_job.job.job_detail.job_submit.video_count
             for action in actions:
-                filename = atlin_yt_job.job.job_uid + "_" + action
+                r = random.randint(0, 1000)
+
+                filename = atlin_yt_job.job.job_uid + "_" + action + '_' + str(r) + '---'
                 filename = utils.get_filename(filename, extension)
 
                 if action == "METADATA":
@@ -365,4 +370,4 @@ def YouTubeInterface(job):
 #jobDict = {"status": "NewJob", "option": "playlist", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/playlist?list=PLADighMnAG4DczAOY7i6-nJhB9sQDhIoR", "videos": 0}
 #jobDict = {"status": "NewJob", "option": "query", "actions": ["metadata", "comments"], "input" : "pao de queijo minero", "videos": 50}
 #jobDict = {"status": "NewJob", "option": "query", "actions": ["comments"], "input" : "pao de queijo liquidificador", "videos": 50}
-#YouTubeInterface(jobDict)
+#YouTubeInterface(None)
