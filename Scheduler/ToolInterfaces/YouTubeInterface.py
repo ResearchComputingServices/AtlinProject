@@ -3,17 +3,17 @@ from Tools.YouTubeAPI.youtube.youtube import *
 import traceback
 import Tools.YouTubeAPI.youtube.utils as utils
 from Tools.YouTubeAPI.youtube.setup_logger import logger
-from AtlinAPI.AtlinAPI import YoutubeJobDetails
+from atlin_api.atlin_api import YoutubeJobDetails
 import Tools.YouTubeAPI.youtube.config as config
-import AtlinAPI.AtlinAPI.atlin as atlinAPI
-import AtlinAPI.AtlinAPI.job as atlinJob
-import AtlinAPI.AtlinAPI.token as atlinToken
+import atlin_api.atlin_api.atlin as atlinAPI
+import atlin_api.atlin_api.job as atlinJob
+import atlin_api.atlin_api.token as atlinToken
 from pathlib import Path
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_DIR="OUTPUT_DATA"
-class AtlinYouTubeJob(atlinAPI.AtlinYoutube):
+class AtlinYouTubeJob(atlinAPI.Atlin):
     def __init__(self, domain: str):
         super().__init__(domain)
         self.token = atlinToken.YoutubeToken()

@@ -1,6 +1,6 @@
-from AtlinAPI import JobStatus, JobPlatform, AtlinYoutube, YoutubeToken
-from AtlinAPI import YoutubeJobDetails
-from AtlinAPI import Job
+from atlin_api import JobStatus, JobPlatform, Atlin, YoutubeToken
+from atlin_api import YoutubeJobDetails
+from atlin_api import Job
 import pprint
 
 import json
@@ -14,7 +14,7 @@ user_uid = "b1d93700-aee5-4eca-939d-cf8b866f2be4"
 
 
 
-atlin = AtlinYoutube("http://localhost:6010")
+atlin = Atlin("http://localhost:6010")
 
 
 #Create a token
