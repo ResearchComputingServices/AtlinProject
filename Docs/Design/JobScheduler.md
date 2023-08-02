@@ -101,7 +101,7 @@ Example:
     "username": "username",
     "password": "password",
     "token_quota": 0-100,
-    "modified_quota_timestamp": "yyyymmddHHMMSS",
+    "modify_date": "yyyymmddHHMMSS",
 }
 ```
 

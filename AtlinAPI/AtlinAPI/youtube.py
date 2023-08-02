@@ -54,14 +54,18 @@ class YoutubeJobDetailsSubmit:
             raise TypeError(f"value should be an integer.")
         self._video_count = value
     
-    def to_json(self):
+    def to_dict(self):
         out = dict()
         try:
             for varname in self._required_fields:
                 out[varname] = getattr(self, varname)
-        except Exception as e:
+        except Exception as exc:
             raise e
-        return json.dumps(out)
+        return out
+    
+    def to_json(self):
+        '''to json'''
+        return json.dumps(self.to_dict())
     
     def from_json(self, data):
         if isinstance(data, str):
@@ -90,12 +94,17 @@ class YoutubeJobDetailsResume:
     def __init__(self):
         for key in self._required_fields.keys():
             setattr(self, key, self._required_fields[key])
-        
-    def to_json(self):
-        out = dict()
+    
+    def to_dict(self):
+        '''to dict'''
+        out = {}
         for key in self._required_fields.keys():
             out[key] = getattr(self, key)
-        return json.dumps(out)
+        return out
+    
+    def to_json(self):
+        '''to json'''
+        return json.dumps(self.to_dict())
 
     def from_json(self, data):
         if isinstance(data, str):
@@ -134,14 +143,14 @@ class YoutubeJobDetails:
         self.job_resume.from_json(data['job_resume'])
             
     def to_json(self):
-        return json.dumps(dict(
-            job_name = self.job_name,
-            job_submit = self.job_submit.to_json(),
-            job_resume = self.job_resume.to_json(),
-        ))
+        return json.dumps(self.to_dict())
     
     def to_dict(self):
-        return json.loads(self.to_json())
+        return {
+            'job_name': self.job_name,
+            'job_submit': self.job_submit if isinstance(self.job_submit, dict) else self.job_submit.to_dict(),
+            'job_resume': self.job_resume if isinstance(self.job_resume,dict) else self.job_resume.to_dict(),
+        }
 
 if __name__ == "__main__":
     
