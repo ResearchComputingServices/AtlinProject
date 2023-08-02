@@ -1,10 +1,21 @@
 import concurrent.futures
 import time
-import sqlite3
-from .Utils import  *
-from .ToolInterfaces.RedditAPIInterface import RedditInterface
-from .ToolInterfaces.CrawlerInterface import CrawlerInterface
-from .ToolInterfaces.YouTubeInterface import YouTubeInterface
+from itertools import repeat
+from pathlib import Path
+from typing import Callable, List
+import sys
+
+BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
+sys.path.insert(0, BASE_DIR)
+
+from AtlinAPI.AtlinAPI.atlin import *
+
+from Scheduler.Utils import  *
+
+from ToolInterfaces.ToolInterface import genericInterface
+from ToolInterfaces.RedditAPIInterface import RedditInterface
+from ToolInterfaces.CrawlerInterface import CrawlerInterface
+from ToolInterfaces.YouTubeInterface import YouTubeInterface
 
 ##############################################################################################################
 # CLASS DEFINITION: Job Scheduler
@@ -14,36 +25,36 @@ class JobScheduler:
 
     #########################################################################
     # MEMBER(S)
-    #########################################################################
-    dataBaseConnection_ = None
-    dataBaseFilePath_ = None
+    #########################################################################   
+    atlin_ = None 
     
     keepRunning_ = True
     waitTime_ = 60 # the number of seconds to wait before checking for new jobs
      
     # This dictionary connects job type flags to the tool which handles them
-    jobHandleDict ={REDDIT_JOB  : RedditInterface,
-                    CRAWL_JOB   : CrawlerInterface,
-                    TWITTER_JOB : DummyInterface,
-                    YOUTUBE_JOB : YouTubeInterface}
-        
+    jobHandleDict = {}
+    
+    # logger
+    logger_ = None
+     
     #########################################################################
     # CONSTRUCTOR
     #########################################################################
     
     def __init__(   self,
-                    dataBaseFilename = '',
+                    dataBaseDomain = "http://localhost:6010",
                     waitTime = 60):
         
         self.waitTime_ = waitTime
    
         self.keepRunning_ = True
         
-        # ToDo: this code will be replaced when NodeJS backend is complete
-        self.dataBaseFilePath_ = dataBaseFilename
-        self.dataBaseConnection_ = sqlite3.connect(dataBaseFilename)
-        self.dataBaseConnection_.row_factory = sqlite3.Row 
-   
+        # ToDo: Connect to the data base API
+        self.atlin_ = AtlinReddit(dataBaseDomain)
+    
+        logging.basicConfig(level=logging.INFO)    
+        self.logger_ = logging.getLogger(__name__)
+                    
     #########################################################################
     # PRIVATE FUNCTIONS
     #########################################################################
@@ -51,21 +62,23 @@ class JobScheduler:
     ############################################################################################
     # This function will take in a list of dictionarys which describe a job and creates seperate
     # threads to run them
-    def submitJobs(self, 
-                   listOfJobDicts):
+    def _submitJobs(self, 
+                   listOfJobJSON : List[any]):
+
+        # TODO: it would be nice to confirm that the items in the list are dictionaries with the correct key-value pairs
 
         # Create a context manager to handle the opening/closing of processes
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            for jobDict in listOfJobDicts:           
-                
+            for jobJSON in listOfJobJSON:           
+                                       
                 # get the data from the job dictionary    
-                jobType = jobDict['jobType']
+                jobType = jobJSON['social_platform']
             
                 if jobType in self.jobHandleDict.keys():
-                     # start a process that will execute the correct script
-                    executor.submit(self.jobHandleDict[jobType],
-                                    self.dataBaseFilePath_, # todo: REMOVE THIS WHEN WE USE THE NODEjs bACK END
-                                    jobDict) 
+                    # start a process that will execute the correct script
+                    executor.submit(genericInterface,
+                                    self.jobHandleDict[jobType],
+                                    jobJSON) 
                 else:
                     print('[ERROR]: Unknown Job Type: ', jobType)
             
@@ -76,75 +89,103 @@ class JobScheduler:
         return
 
     ############################################################################################
-    # This function checks the data base for any rows in the JobsTable which has a job
-    # status set to READY
-    # ToDo: This function will need to be updated to use the NodeJS endpoints when they are ready
-    def checkDataBaseForNewJobs(self):
+    # Handle API request for job with status == CREATED
+    def _getJobs(self,
+                 jobStatus: JobStatus):
+        response = None
         
-        sqliteCursor = self.dataBaseConnection_.cursor()
-        
-        sql_table_query = '''SELECT * FROM JobsTable WHERE jobStatus = \'READY\' '''
-        sqliteCursor.execute(sql_table_query)
-        
-        things = sqliteCursor.fetchall()
-        
-        sqliteCursor.close()
-        
-        listOfJobsDicts = [{k: item[k] for k in item.keys()} for item in things]
-                      
-        return listOfJobsDicts
+        # request all the "created"
+        try:
+            response = self.atlin_.job_get(job_status=[jobStatus])
+        except Exception as e:
+            self.logger_.error(e)  
+            print('ERROR: _getJobs: ',e)    
+
+        return response
 
     ############################################################################################
+    # This function checks the data base for any rows in the JobsTable which has a job
+    # status set to CREATED
+    def _checkDataBaseForNewJobs(self) -> None:
+        
+        try:
+            response = self._getJobs(JobStatus().created)
+    
+            # This function will submit the jobs to be run on seperate processes
+            self._submitJobs(response.json())
+               
+        except Exception as e:
+            self.logger_.error(e)
+            print('ERROR: checkDataBaseForNewJobs: ', e) 
+
+    ############################################################################################
+    # This function checks the data base for any rows in the JobsTable which has a job
+    # status set to READY
+    def _checkOnWaitingJobs(self) -> None:
+        
+        try:
+            response = self._getJobs(JobStatus().paused)  
+            
+            # TODO: Fill in the code here to change waiting jobs to ready jobs
+                  
+        except Exception as e:
+            self.logger_.error(e)
+            print('ERROR: CheckOnWaitingJobs: ',e)
+                       
+    ############################################################################################
     # This function checks for any sort of exit conditions
-    def checkExit(self):
-        print('CheckExit')
+    def _checkExit(self):
+        logging.info('CheckExit')
         
         return True
      
     #########################################################################
     # PUBLIC FUNCTIONS
     #########################################################################
-       
+    
+    ############################################################################################
+    # Add a new job type, and the ToolInterface to run it
+    def AddJobType( self,
+                    jobType : str,
+                    toolFunctionPoint : Callable) -> None:
+
+        if callable(toolFunctionPoint):
+            self.jobHandleDict[jobType] = toolFunctionPoint
+        else:
+            logging.error('AddJobType: argument \'toolFunctionPoint\' not a callable type')
+            raise TypeError
+                
     ############################################################################################
     # This is the main loop for the job scheduler
     def Run(self):
                 
         while self.keepRunning_:
             
+            # TODO: Get all waiting jobs and check to see if any can be set to created
+            # TODO: I think the job status should be ready not created
+            self.logger_.info('Checking jobs waiting...')
+            self._checkOnWaitingJobs()
+            
             # This function will check the database for news and return a list of dictionaries with
             # the row ID of the new job
-            listOfJobsDicts = self.checkDataBaseForNewJobs()
-
-            if len(listOfJobsDicts) > 0:               
-                # This function will submit the jobs to be run on seperate processes
-                self.submitJobs(listOfJobsDicts)
-                
+            self.logger_.info('Checking jobs ready...')
+            self._checkDataBaseForNewJobs()
+            
+            # don't spam the API
             time.sleep(WAIT_TIME)
             
             # check if some type of exit condition has been set
-            self.checkExit()
-
+            self._checkExit()
 
 ##############################################################################################################
+
 if __name__ == '__main__':
+        
+    js = JobScheduler(waitTime=500)
     
-    js = JobScheduler('testDataBase.db', 5)
+    js.AddJobType('REDDIT', RedditInterface)
+    js.AddJobType('YOUTUBE', YouTubeInterface)
+    js.AddJobType('CRAWL', CrawlerInterface)
     
     js.Run()
     
- 
-# Need to have API calls which can replace the functionality in checkDataBaseForNewJobs   
-# 
-# an API call which gets all the jobs? Or can we request all the jobs with certain IDs. Status', etc...
-#
-# def checkDataBaseForNewJobs(self):   
-#   sqliteCursor = self.dataBaseConnection_.cursor()    
-#   sql_table_query = '''SELECT * FROM JobsTable WHERE jobStatus = \'READY\' '''
-#   sqliteCursor.execute(sql_table_query)
-#
-#   things = sqliteCursor.fetchall()
-#
-#   sqliteCursor.close()
-#
-#   listOfJobsDicts = [{k: item[k] for k in item.keys()} for item in things]
-#   return listOfJobsDicts

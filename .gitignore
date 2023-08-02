@@ -4,7 +4,7 @@ Scheduler/TaskMaker.py
 Scheduler/DataBaseUtils.py
 Scheduler/MakeTestDataBase.py
 Scheduler/testDataBase.db
-Scheduler/OutputData/
+Scheduler/OUTPUT_DATA/
 Docs/rcs-sm-db-backup.sql
 
 *.db
@@ -12,6 +12,11 @@ Docs/rcs-sm-db-backup.sql
 sqlfix
 .venv
 *.DS_Store
-
+AtlinAPI/AtlinAPI/.DS_Store
 *_test.py
 
+Output/
+atenv
+../AtlinAPI/.DS_Store
+../AtlinAPI/AtlinAPI/.DS_Store
+.DS_Store

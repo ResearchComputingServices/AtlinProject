@@ -149,7 +149,7 @@ def export_dict_to_excel(records, directory, name):
 # ***********************************************************************************************************************
 def save_file(records, directory, filename):
     # Export info to excel
-    if len(records)>0:
+    if records and len(records)>0:
         filename_path = export_dict_to_excel(records, directory, filename)
         print("Output: " + filename_path)
 
@@ -202,3 +202,17 @@ def get_fullpath(directory, name):
     filename = secure_filename(name)
     filename_path = os.path.join(full_path, filename)
     return filename_path
+
+
+#*****************************************************************************************************
+#*****************************************************************************************************
+def get_filename(name, extension):
+    scrap_date = get_today_datetime()
+    filename =  name + '__' + scrap_date + '_' + '.' + extension
+    return filename
+
+
+def get_today_datetime():
+    now = datetime.now()
+    dt_string = now.strftime("%Y_%m_%d")
+    return dt_string
