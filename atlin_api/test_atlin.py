@@ -3,9 +3,9 @@ import json
 from json.decoder import JSONDecodeError
 from uuid import uuid4
 import logging
-from AtlinAPI import JobStatus, JobPlatform, Atlin, YoutubeToken
-from AtlinAPI import YoutubeJobDetails
-from AtlinAPI import Job
+from atlin_api import JobStatus, JobPlatform, Atlin, YoutubeToken
+from atlin_api import YoutubeJobDetails
+from atlin_api import Job
 
 logging.basicConfig(level=logging.ERROR)
 

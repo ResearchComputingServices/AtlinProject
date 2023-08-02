@@ -1,3 +1,4 @@
+'''Atlin module'''
 from .atlin import Atlin, AtlinYoutube, AtlinReddit, JobPlatform, JobStatus
 from .youtube import YoutubeJobDetails
 from .reddit import RedditJobDetails
