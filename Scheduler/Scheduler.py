@@ -1,3 +1,4 @@
+import logging
 import concurrent.futures
 import time
 from itertools import repeat
@@ -8,7 +9,8 @@ import sys
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
 sys.path.insert(0, BASE_DIR)
 
-from AtlinAPI.AtlinAPI.atlin import *
+#from AtlinAPI.AtlinAPI.atlin import *
+from atlin_api.atlin_api import *
 
 from Scheduler.Utils import  *
 
@@ -50,9 +52,10 @@ class JobScheduler:
         self.keepRunning_ = True
         
         # ToDo: Connect to the data base API
-        self.atlin_ = AtlinReddit(dataBaseDomain)
-    
-        logging.basicConfig(level=logging.INFO)    
+        #self.atlin_ = AtlinReddit(dataBaseDomain)
+        self.atlin_ = Atlin(dataBaseDomain)
+
+        logging.basicConfig(level=logging.INFO)
         self.logger_ = logging.getLogger(__name__)
                     
     #########################################################################
