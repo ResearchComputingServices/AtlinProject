@@ -179,7 +179,9 @@ class AtlinBase(ABC):
     def job_update(self, job_uid, data):
         """Updates a job"""
         encoded_url = f"{self.url_api}job/{job_uid}"
-        return self._request_put(encoded_url, None, None, data)
+        keep_fields = ["job_status", "modify_date", "complete_date", "output_path", "job_message", "job_detail"]
+        filtered_data = {key:data[key] for key in data if key in keep_fields}
+        return self._request_put(encoded_url, None, None, filtered_data)
 
     def job_delete(self, job_uid):
         """Deletes a job given a job_uid"""
