@@ -189,6 +189,8 @@ class AtlinBase(ABC):
             "job_detail",
         ]
         filtered_data = {key: data[key] for key in data if key in keep_fields}
+        # update the modify date
+        filtered_data['modify_date'] = datetime.now().isoformat()
         return self._request_put(encoded_url, None, None, filtered_data)
 
     def job_delete(self, job_uid):
