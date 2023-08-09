@@ -3,9 +3,11 @@ import json
 from json.decoder import JSONDecodeError
 from uuid import uuid4
 import logging
+import time
 from atlin_api import JobStatus, JobPlatform, Atlin, YoutubeToken, RedditToken
 from atlin_api import YoutubeJobDetails, RedditJobDetails
 from atlin_api import Job
+
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -167,6 +169,12 @@ response = atlin.job_update(job.job_uid, job.to_dict())
 response.raise_for_status()
 if response:
     job.from_json(response.json())
+
+time.sleep(1) # give time to update the complete_date field.
+# PUT - update the status of a job to success
+response = atlin.job_set_status(job.job_uid, JobStatus.success)
+job.from_json(response.json())
+response.raise_for_status()
 
 # GET - get quota
 response = atlin.token_get(token_uid=job.token_uid)
