@@ -4,6 +4,7 @@ from json.decoder import JSONDecodeError
 import os
 import logging
 from uuid import UUID, uuid4
+from datetime import datetime
 from .youtube import YoutubeJobDetails
 from .reddit import RedditJobDetails
 from .atlin import JobStatus, JobPlatform
@@ -111,6 +112,8 @@ class Job:
                 f"'{value}' is not a valid job status."
                 + f"Valid status are: {', '.join(JobStatus.valid_values)}"
             )
+        if value == JobStatus.failed or value == JobStatus.success:
+            setattr(self, 'complete_date', datetime.now().isoformat())
         setattr(self, "_job_status", value)
 
     @property
