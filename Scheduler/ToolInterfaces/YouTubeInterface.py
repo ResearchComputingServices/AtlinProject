@@ -10,6 +10,9 @@ import atlin_api.atlin_api.token as atlinToken
 from pathlib import Path
 import os
 import random
+from datetime import datetime
+import json
+from dateutil import parser
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_DIR="OUTPUT_DATA"
@@ -19,6 +22,8 @@ class AtlinYouTubeJob(atlinAPI.Atlin):
         super().__init__(domain)
         self.token = atlinToken.YoutubeToken()
         self.job = atlinJob.Job()
+
+
 
 ####################################################################################################
 def validate_output_dir(output_dir):
@@ -56,10 +61,32 @@ def load_job_state(state):
     return state
 
 
+
+# Define a custom function to serialize datetime objects
+def serialize_datetime(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError("Type not serializable")
+
+
+####################################################################################################
+def save_job_message(msg=None):
+    try:
+        if msg!=None:
+            atlin_yt_job.job.job_message = msg
+            response = atlin_yt_job.job_update(job_uid=atlin_yt_job.job.job_uid, data=atlin_yt_job.job.to_dict())
+
+            if response.status_code != 200:
+                logger.debug("An error occurred when saving the msg/date")
+
+    except:
+        ex = traceback.format_exc()
+        logger.debug("An error occurred when saving the job message.")
+        logger.debug(ex)
+
+
 ####################################################################################################
 def save_job_state(state):
-
-    job_status_completed = atlinAPI.JobStatus()
     job_status_completed = job_status.success
     try:
         youtube_job_details = YoutubeJobDetails()
@@ -82,9 +109,8 @@ def save_job_state(state):
             job_status_completed = job_status.failed
     except:
         ex = traceback.format_exc()
-        logger.debug("An error occurred when saving the state")
+        logger.debug("An error occurred when saving the state.")
         logger.debug(ex)
-        #TODO: Log the exception
 
     return job_status_completed
 
@@ -95,7 +121,6 @@ def change_job_status(new_job_status):
     response = atlin_yt_job.job_set_status(job_uid=atlin_yt_job.job.job_uid, job_status=new_job_status)
     atlin_yt_job.job.job_status = new_job_status
     if response.status_code != 200:
-        #ToDo: Handle this scenario
         return response.status_code
 
 ####################################################################################################
@@ -103,38 +128,41 @@ def change_job_status(new_job_status):
 ####################################################################################################
 def handle_state(yt):
     logger.debug("Handle state")
-    job_status_completed = atlinAPI.JobStatus()
     #SUCCESS
-    if len(yt.state.actions)==0:
-        change_job_status(job_status.success)
-        job_status_completed = job_status.success
+    if yt.state.error:
+        job_status_completed = job_status.failed
+        change_job_status(job_status.failed)
+        save_job_message(msg=yt.state.error_description)
     else:
         if yt.state.quota_exceeded:
-            change_job_status(job_status.paused)
             job_status_completed = job_status.paused
+            change_job_status(job_status.paused)
             save_job_state(yt.state)
-            #ToDo: Update Job Message in DB
+            save_job_message(msg="There isn't enough quota to complete this request.")
         else:
-            #change_job_status(job_status.failed)
-            job_status_completed = job_status.failed
-            #job_status_completed = save_job_state(yt.state)
-            #ToDo JobMessage = yt.state.error_description
+            if len(yt.state.actions)==0:
+                save_job_message(msg="Completed Job")
+                change_job_status(job_status.success)
+                job_status_completed = job_status.success
+            else:
+                job_status_completed = job_status.failed
+                save_job_message(msg=yt.state.error_description)
 
     #Save the quota
     updated_quota = yt.state.current_quota
     print ("Updated quota: ")
     print(updated_quota)
+    print ("Status: ")
+    print (job_status_completed)
     response = atlin_yt_job.token_set_quota(atlin_yt_job.token.token_uid, job_platform.youtube, updated_quota)
     if response.status_code!=200:
-        print ("Report error to scheduler")
-
+        logger.debug("An error occurred when updating the quota.")
     return job_status_completed
 
 
 ####################################################################################################
 #
 ####################################################################################################
-#def handle_new_job(jobDict, api_token, quota, output_dir, uuid):
 def handle_new_job():
 
     response_list = []
@@ -147,21 +175,25 @@ def handle_new_job():
             job_status_completed = handle_state(yt)
             return job_status_completed
 
+        if not yt.state.under_quota_limit():
+            yt.state.quota_exceeded=True
+            yt.state.videos_ids.append('NEW')
+            job_status_completed = handle_state(yt)
+            return job_status_completed
+
         option = atlin_yt_job.job.job_detail.job_submit.option_type
         actions = atlin_yt_job.job.job_detail.job_submit.actions
         input = atlin_yt_job.job.job_detail.job_submit.option_value
         extension = "xlsx"
 
         #Validate path
-        #atlin_yt_job.job.output_path = "/Users/jazminromero/development/AtlinProject/Output/YouTube"
         atlin_yt_job.job.output_path = validate_output_dir(atlin_yt_job.job.output_path)
+        yt.state.add_actions_to_state(actions)
 
         if option == "VIDEO":
             for action in actions:
                 filename = atlin_yt_job.job.job_uid + "_" + action
                 filename = utils.get_filename(filename, extension)
-
-
                 if action == "METADATA":
                     response = yt.get_video_metadata_for_url(input)
                     utils.save_file(response, atlin_yt_job.job.output_path, filename)
@@ -170,13 +202,17 @@ def handle_new_job():
                     utils.save_file(response, atlin_yt_job.job.output_path, filename)
 
                 response_list.append(response)
+
                 # An error occurred while doing the above action or the quota exceeded we cannot continue executing actions
                 if yt.state.error or yt.state.quota_exceeded:
                     break
 
         if option == "PLAYLIST":
+            r = random.randint(0, 1000)
+
             for action in actions:
-                filename = atlin_yt_job.job.job_uid + "_" + action
+
+                filename = atlin_yt_job.job.job_uid + "_" + action + '_' + str(r) + '---'
                 filename = utils.get_filename(filename, extension)
                 if action == "METADATA":
                     response = yt.get_videos_metadata_from_playlist(input)
@@ -213,8 +249,10 @@ def handle_new_job():
         if option == "QUERY":
 
             videos = atlin_yt_job.job.job_detail.job_submit.video_count
+            r = random.randint(0, 1000)
+
             for action in actions:
-                r = random.randint(0, 1000)
+
 
                 filename = atlin_yt_job.job.job_uid + "_" + action + '_' + str(r) + '---'
                 filename = utils.get_filename(filename, extension)
@@ -305,6 +343,88 @@ def extract_jobs(response):
         jobs = response.json()
     return jobs
 
+
+####################################################################################################
+#
+####################################################################################################
+def retrieving_token():
+    # Get token information (api token and quota)
+    token_uid = atlin_yt_job.job.token_uid
+    response = atlin_yt_job.token_get(token_uid=token_uid)
+    retrieved = True
+    if response.status_code == 200:
+        try:
+            atlin_yt_job.token.from_json(response.json())
+        except Exception as e:
+            logger.debug(f"Quota could not been fetch {e}")
+            save_job_message(msg=f"Quota could not been fetch {e}")
+            retrieved = False
+    else:
+        logger.debug(f"Token couldn't been retrieved.")
+        save_job_message(msg="API token couldn't been retrieved.")
+        retrieved = False
+
+    return retrieved
+
+
+
+#*****************************************************************************************************
+#This functions converts a UTC date to the local zone
+#Returns date as a string
+#*****************************************************************************************************
+def to_local_zone(datestring):
+    try:
+        utc_dt = parser.parse(datestring)
+        local_dt = utc_dt.astimezone(None)
+        date_time = local_dt.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        return date_time
+    except:
+        return datestring
+
+
+
+####################################################################################################
+#
+####################################################################################################
+def is_24hrs_pass():
+
+    execute = True
+
+    str_modify_date_local = to_local_zone(atlin_yt_job.job.modify_date)
+    dt_modify_date_local =  datetime.strptime(str_modify_date_local, "%Y-%m-%dT%H:%M:%S.%fZ")
+    print (dt_modify_date_local)
+
+    current_date = datetime.now()
+    print (current_date)
+
+    delta = current_date - dt_modify_date_local
+    delta_hours = delta.total_seconds() / 3600
+    print(delta)
+    print(delta_hours)
+
+    if delta_hours<24:
+        execute = False
+
+    return execute
+
+
+####################################################################################################
+#
+####################################################################################################
+def handle_paused_jobs():
+    execute = is_24hrs_pass()
+
+    if execute:
+        if "NEW" in atlin_yt_job.job.job_detail.job_resume.videos_ids:
+            job_status_completed = handle_new_job()
+        else:
+            job_status_completed = resume_job()
+    else:
+        job_status_completed = "PAUSED"
+
+    return job_status_completed
+
+
 ####################################################################################################
 #
 ####################################################################################################
@@ -312,9 +432,6 @@ def YouTubeInterface(job):
     try:
         logger.info('Creating API class')
         print ("Starting job...")
-
-        #Create a class for the AtlinYoutube
-        #ToDo: Ask question: Is this the best place to put these statements?
 
         global atlin_yt_job
         atlin_yt_job= AtlinYouTubeJob("http://localhost:6010")    #ToDo: ####---> Question: From where do I get this address?
@@ -327,44 +444,41 @@ def YouTubeInterface(job):
 
 
         #For testing only +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        #response = atlin_yt_job.job_get(job_status=[job_status.created])
+        #response = atlin_yt_job.job_get(job_status=[job_status.paused])
         #if response.status_code == 200:
         #    jobs = response.json()
         #job = jobs[0]
         #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        atlin_yt_job.job.from_json(job)
 
-        atlin_yt_job.job = atlinJob.Job(job)
 
         logger.info('Performing YouTube job:')
         logger.info(job)
 
-        #Get token information (api token and quota)
-        #response = atlin_job.token_get(atlin_job.token_uid)
-        response = atlin_yt_job.token_get(token_uid=atlin_yt_job.job.token_uid)
+        retrieved = retrieving_token()
+        if not retrieved:
+            return job_status.failed
 
-        if response.status_code == 200:
-            try:
-                atlin_yt_job.token.from_json(response.json())
-            except Exception as e:
-                print(f"Could not fetch token quota. {e}")
-                #exit()
-                #ToDo: Handle this scenario
-
-        if response.status_code != 200:
-            print("Report error to scheduler")
-
-        #ToDo: Verify that there isn't another job already running  with the same token_uid
 
         if atlin_yt_job.job.job_status == "CREATED":
+            print("Retrieving Info...")
+            atlin_yt_job.job.job_status = "RUNNING"
             job_status_completed = handle_new_job()
+            print('Job Finished...')
         elif atlin_yt_job.job.job_status == "PAUSED":
-            job_status_completed = resume_job()
+            print ("Pausing Job...")
+            job_status_completed=handle_paused_jobs()
+
 
         return job_status_completed
     except:
         ex = traceback.format_exc()
         print (ex)
-        
+        msg = f"An exception occurred when executing the job {ex}"
+        logger.debug(msg)
+        save_job_message(msg =f"An exception occurred when executing the job {ex}")
+        return job_status.failed
+
 ################################################
 #jobDict = {"status": "NewJob", "option": "video", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/watch?v=-DkpWjlJQIY", "videos": 0}
 #jobDict = {"status": "NewJob", "option": "playlist", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/playlist?list=PLADighMnAG4DczAOY7i6-nJhB9sQDhIoR", "videos": 0}

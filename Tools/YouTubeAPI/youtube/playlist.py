@@ -29,7 +29,7 @@ class Playlist(object):
             id = url[index + 5:]
             self.id = id
         else:
-            msg = f"{url} is not a valid url. "
+            msg = f"{url} is not a valid playlist url. "
             st = log_format("get_playlist_id", msg)
             logger.error(st)
             self._youtube.state.set_error_description(True, st)

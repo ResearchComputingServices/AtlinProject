@@ -70,7 +70,7 @@ class Job:
     @property
     def token_uid(self):
         """unique id of token"""
-        return getattr(self, "_token_uid", str(uuid4))
+        return getattr(self, "_token_uid", str(uuid4()))
 
     @token_uid.setter
     def token_uid(self, value):
@@ -165,6 +165,8 @@ class Job:
 
     @output_path.setter
     def output_path(self, value):
+        if value is None:
+            value = ''
         if not isinstance(value, str):
             raise TypeError(f"output_path should be a string, not a {type(value)}")
         if value != "":
@@ -179,6 +181,8 @@ class Job:
 
     @job_message.setter
     def job_message(self, value):
+        if value is None:
+            value = ''
         self._validate_string("job_message", value)
         setattr(self, "_job_message", value)
 

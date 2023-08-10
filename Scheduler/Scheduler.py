@@ -168,7 +168,7 @@ class JobScheduler:
             # TODO: I think the job status should be ready not created
             self.logger_.info('Checking jobs waiting...')
             self._checkOnWaitingJobs()
-            
+
             # This function will check the database for news and return a list of dictionaries with
             # the row ID of the new job
             self.logger_.info('Checking jobs ready...')
@@ -184,7 +184,7 @@ class JobScheduler:
 
 if __name__ == '__main__':
         
-    js = JobScheduler(waitTime=500)
+    js = JobScheduler(waitTime=WAIT_TIME)
     
     js.AddJobType('REDDIT', RedditInterface)
     js.AddJobType('YOUTUBE', YouTubeInterface)

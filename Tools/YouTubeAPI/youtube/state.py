@@ -128,4 +128,12 @@ class State(object):
             obj = None
         return obj
 
+    def add_actions_to_state(self, actions):
+        if "METADATA" in actions:
+            self.add_action(config.ACTION_RETRIEVE_VIDEOS)
+
+        if "COMMENT" in actions:
+            self.add_action(config.ACTION_RETRIEVE_COMMENTS)
+
+
 
