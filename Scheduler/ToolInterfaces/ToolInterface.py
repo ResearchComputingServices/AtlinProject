@@ -16,7 +16,6 @@ def updateJobStatus(job_uid, status) -> None:
     logging.debug('updateJobStatus: Updating status: ' + job_uid)
     
     # Set up connection to database
-    #atlin = AtlinReddit("http://localhost:6010")
     atlin = Atlin("http://localhost:6010")
 
     statusCode = atlin.job_set_status(job_uid, status).status_code

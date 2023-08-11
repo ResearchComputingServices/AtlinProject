@@ -4,7 +4,6 @@ from colorama import Fore, Back, Style
 # GLOBAL CONSTANTS
 ####################################################################################################
 
-
 API_BASE = 'https://oauth.reddit.com/'
 
 POST_KEYS_OF_INTEREST = [   'subreddit',
@@ -81,7 +80,31 @@ REDDIT_SORT_BY = [SORT_BY_RELAVANCE,
                   SORT_BY_TOP,
                   SORT_BY_NEW,
                   SORT_BY_MOST_COMMENTS]
-                  
+
+CRED_USERNAME_KEY = 'username'
+CRED_PASSWORD_KEY = 'password'
+CRED_CLIENT_ID_KEY = 'CLIENT_ID'
+CRED_SECRET_TOKEN_KEY = 'SECRET_TOKEN'
+CRED_GRANT_TYPE_KEY = 'grant_type' 
+CRED_GRANT_TYPE_VALUE = 'password' 
+          
+DEFAULT_HEADER_KEY = 'User-Agent'
+DEFAULT_HEADER_VALUE = 'MyAPI/0.0.1'  
+REDDIT_OAUTH_POST = 'https://www.reddit.com/api/v1/access_token' 
+
+REDDIT_OAUTH_KEY = 'access_token'     
+REDDUT_AUTHEN_KEY = 'Authorization'      
+
+REDDIT_JOB_DETAIL_SORT_BY ='sortBy' 
+REDDIT_JOB_DETAIL_TIME_FRAME = 'timeFrame' 
+REDDIT_JOB_DETAIL_N = 'n', 
+REDDIT_JOB_DETAIL_SUBREDDIT = 'subreddit'
+REDDIT_JOB_DETAIL_USER = 'user', 
+REDDIT_JOB_DETAIL_POST = 'post', 
+REDDIT_JOB_DETAIL_KEYWORD = 'keyword', 
+REDDIT_JOB_DETAIL_GETPOSTS = 'getposts', 
+REDDIT_JOB_DETAIL_COMMENTS = 'getcomments'
+    
 ####################################################################################################
 # This function removed the 'type' code at the front of a reddit ID36
 ####################################################################################################

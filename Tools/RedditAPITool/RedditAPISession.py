@@ -29,16 +29,9 @@ from RedditAPITool.RedditUtils import *
 class RedditAPISession:
 
     #########################################################################
-    # MEMBER(S)
+   
     #########################################################################
     
-    header_ = {}
-    
-    params_ = {}
-    
-    listOfResponses_ = []
-    
-    numRequest_ = 0
     
     #########################################################################
     # CONSTRUCTOR(S)
@@ -46,9 +39,18 @@ class RedditAPISession:
     
     def __init__(   self,
                     credientalsDict = {}):
+        # Initialize members
         
         self.credientalsDict_ = credientalsDict
             
+        self.header_ = {}
+    
+        self.params_ = {}
+    
+        self.listOfResponses_ = []
+    
+        self.numRequest_ = 0
+        
         self.generateAuthentifiedHeader()
         
     #########################################################################
@@ -56,27 +58,27 @@ class RedditAPISession:
     #########################################################################
 
     def generateAuthentifiedHeader( self,
-                                    headerKey = 'User-Agent',
-                                    headerValue = 'MyAPI/0.0.1'):
-               
+                                    headerKey = DEFAULT_HEADER_KEY,
+                                    headerValue = DEFAULT_HEADER_VALUE):
+                      
         # note that CLIENT_ID refers to 'personal use script' and SECRET_TOKEN to 'token'
-        auth = requests.auth.HTTPBasicAuth( self.credientalsDict_['CLIENT_ID'],
-                                            self.credientalsDict_['SECRET_TOKEN'])
+        auth = requests.auth.HTTPBasicAuth( self.credientalsDict_[CRED_CLIENT_ID_KEY],
+                                            self.credientalsDict_[CRED_SECRET_TOKEN_KEY])
         
         # setup our header info, which gives reddit a brief description of our app
         self.header_[headerKey] =  headerValue
 
         # send our request for an OAuth token
-        resp = requests.post(   'https://www.reddit.com/api/v1/access_token', # TODO: Make this a CONST somewhere
+        resp = requests.post(   REDDIT_OAUTH_POST, # TODO: Make this a CONST somewhere
                                 auth=auth, 
                                 data=self.credientalsDict_, 
                                 headers=self.header_)
                 
         # convert response to JSON and get access_token value
-        TOKEN = resp.json()['access_token']
+        TOKEN = resp.json()[REDDIT_OAUTH_KEY]
 
         # add authorization to our headers dictionary
-        self.header_['Authorization'] = f"bearer {TOKEN}"
+        self.header_[REDDUT_AUTHEN_KEY] = f"bearer {TOKEN}"
 
     ####################################################################################################
     # This function returns the comments for a given post
@@ -148,8 +150,7 @@ class RedditAPISession:
     ####################################################################################################
     def extractParams(  self,
                         jobDict):
-
-        self.params_['sortBy'] = jobDict['sortBy']
+        self.params_['sort'] = jobDict['sortBy']
         self.params_['limit'] = jobDict['n']
         self.params_['t'] = jobDict['timeFrame']
        
@@ -197,7 +198,7 @@ class RedditAPISession:
         for i in range(0, performNumRequests):
 
             self.params_['after'] = afterID        
-                        
+       
             try:
                 response = requests.get(url=urlString,
                                     headers = self.header_,
@@ -231,13 +232,13 @@ class RedditAPISession:
     ####################################################################################################
     # This function handles 'subreddit' type jobs
     def handleSubRedditJob(self, jobDict) -> bool:
-        
+
         successFlag = None
               
         if jobDict['getposts'] == 1: 
             successFlag = self.getSubredditPosts(jobDict)
         elif len(jobDict['keyword']) > 0:
-            successFlag = self.getSubredditKeywordSearch(  jobDict)
+            successFlag = self.getSubredditKeywordSearch(jobDict)
         else:
             logging.warning('[WARNING]: HandlejobDict: No ACTION specified for subreddit',flush=True)  
             successFlag = False
@@ -274,23 +275,22 @@ class RedditAPISession:
         
     ####################################################################################################
     # This function performs the API call which is described in the jobDict dictionary.
-    def HandleJobDict(self, jobDict) -> None:
-        
+    def HandleJobDict(self, jobDict) -> None:      
+            
         successFlag = False
         
         self.extractParams(jobDict)
                 
         # This block of code calls the API command which is described in the jobDict          
         if jobDict['subreddit'] != None:
-            successFlag = self.handleSubRedditJob(jobDict)
-        
+            successFlag = self.handleSubRedditJob(jobDict)        
         elif jobDict['user'] != None:
             successFlag = self.handleUserJob(jobDict)       
-            
         elif  jobDict['post'] != None:
             successFlag = self.handlePostJob(jobDict)
         else:
             logging.warning('[WARNING]: HandlejobDict: No ITEM ID specified.')  
+            print('[WARNING]: HandlejobDict: No ITEM ID specified.')  
         
         return successFlag
     
@@ -307,7 +307,7 @@ class RedditAPISession:
             
             filePath = os.path.join(folderPath, filename)
             file = open(filePath, "w")
-            
+           
             listOrResponses = self.GetResponses()
             for responseJSON in listOrResponses:
                 
@@ -348,6 +348,7 @@ class RedditAPISession:
 
 # Example command line calls:
 #python RedditAPISession.py --subreddit 'canada' --getposts 1 --n 1 --sortBy new
+#python RedditAPISession.py --subreddit canada --keyword maple --n 1 --sortBy top
 def ExtractCommandLineArgs() :
     parser = argparse.ArgumentParser()
 
@@ -380,12 +381,18 @@ def ExtractCommandLineArgs() :
 if __name__ == '__main__':
     
     credientalsDict = {}
-
+    credientalsDict['grant_type'] = 'password'
+    credientalsDict['CLIENT_ID'] = '_-W7ANd6UN4EXexvgHn8DA'
+    credientalsDict['SECRET_TOKEN'] = 'kpBdT1f-nRHM_kxdBzmxoOnDo_96FA'
+    credientalsDict['username'] = 'nickshiell'
+    credientalsDict['password'] =  'Q!w2e3r4'
         
     session = RedditAPISession(credientalsDict)
     
     # turn the list of command line args into a dictionary
     jobDict = ExtractCommandLineArgs()    
+    
+    print(jobDict)
     
     # collect all the responses generated by the RedditInterface named session
     if session.HandleJobDict(jobDict):
@@ -395,7 +402,7 @@ if __name__ == '__main__':
         for responseJSON in session.GetResponses():
             print(responseJSON)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ POST DATA ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-            RedditUtils.DisplayDict(responseJSON['data'], RedditUtils.POST_KEYS_OF_INTEREST)
+            DisplayDict(responseJSON['data'], POST_KEYS_OF_INTEREST)
             input()    
     
            

@@ -51,8 +51,6 @@ class JobScheduler:
    
         self.keepRunning_ = True
         
-        # ToDo: Connect to the data base API
-        #self.atlin_ = AtlinReddit(dataBaseDomain)
         self.atlin_ = Atlin(dataBaseDomain)
 
         logging.basicConfig(level=logging.INFO)
@@ -188,7 +186,7 @@ class JobScheduler:
         while self.keepRunning_:
             
             # TODO: Get all waiting jobs and check to see if any can be set to created
-            # TODO: I think the job status should be ready not created
+            # TODO: I think the job status should be READY not CREATED
             self.logger_.info('Checking jobs waiting...')
             self._checkOnWaitingJobs()
 
