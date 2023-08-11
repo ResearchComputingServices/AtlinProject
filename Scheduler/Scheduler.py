@@ -123,6 +123,26 @@ class JobScheduler:
         return usedTokenIDs
 
     ############################################################################################
+    # Merges the created and paused jobs and returns a list sort by age (oldest to youngest) 
+    def _getPotentiallyRunnableJobs(self) -> list:
+        potentiallyRunnableJobs = []
+        
+        try:
+            createdJobs = self._getJobs(JobStatus().created).json()
+            pausedJobs = self._getJobs(JobStatus().paused).json()
+        
+            potentiallyRunnableJobs = createdJobs + pausedJobs
+                   
+            potentiallyRunnableJobs.sort(key= lambda job: job['create_date'])
+                
+        except Exception as e:
+            self.logger_.error(e)
+            print('ERROR: _getCurrentlyUsedTokenIDs: ', e) 
+        
+        return potentiallyRunnableJobs
+        
+
+    ############################################################################################
     # This function compares rows in the jobs table with the status CREATED with those that are 
     # currently status RUNNING. If the token_uid of a CREATED job is not currenly used by a 
     # RUNNING job it is added to the returned list.
@@ -131,11 +151,12 @@ class JobScheduler:
         runnableJobs = []
         
         try:
-            createdJobs = self._getJobs(JobStatus().created).json()
-            
+            # createdJobs = self._getJobs(JobStatus().created).json()
+            potentiallyRunnableJobs = self._getPotentiallyRunnableJobs()
             usedTokenIDs = self._getCurrentlyUsedTokenIDs()
             
-            for job in createdJobs:
+            # for job in createdJobs:
+            for job in potentiallyRunnableJobs:
                 if job['token_uid'] not in usedTokenIDs:
                     runnableJobs.append(job)   
                     usedTokenIDs.append(job['token_uid'])
@@ -160,20 +181,6 @@ class JobScheduler:
         except Exception as e:
             self.logger_.error(e)
             print('ERROR: _checkDataBaseForJobsToSubmit: ', e) 
-
-    ############################################################################################
-    # This function checks the data base for any rows in the JobsTable which has a job
-    # status set to READY
-    def _checkOnWaitingJobs(self) -> None:
-        
-        try:
-            response = self._getJobs(JobStatus().paused)  
-            
-            # TODO: Fill in the code here to change waiting jobs to ready jobs
-                  
-        except Exception as e:
-            self.logger_.error(e)
-            print('ERROR: CheckOnWaitingJobs: ',e)
                        
     ############################################################################################
     # This function checks for any sort of exit conditions
@@ -204,18 +211,13 @@ class JobScheduler:
                 
         while self.keepRunning_:
             
-            # TODO: Get all waiting jobs and check to see if any can be set to created
-            # TODO: I think the job status should be READY not CREATED
-            self.logger_.info('Checking jobs waiting...')
-            self._checkOnWaitingJobs()
-
             # This function will check the database for news and return a list of dictionaries with
             # the row ID of the new job
             self.logger_.info('Checking jobs ready...')
             self._checkDataBaseForJobsToSubmit()
             
             # don't spam the API
-            time.sleep(WAIT_TIME)
+            time.sleep(self.waitTime_)
             
             # check if some type of exit condition has been set
             self._checkExit()
