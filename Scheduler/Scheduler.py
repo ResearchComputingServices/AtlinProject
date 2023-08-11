@@ -166,7 +166,7 @@ class JobScheduler:
             # TODO: I think the job status should be READY not CREATED
             self.logger_.info('Checking jobs waiting...')
             self._checkOnWaitingJobs()
-            
+
             # This function will check the database for news and return a list of dictionaries with
             # the row ID of the new job
             self.logger_.info('Checking jobs ready...')

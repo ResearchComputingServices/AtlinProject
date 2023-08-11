@@ -1,5 +1,6 @@
 import json
-
+import logging
+logger = logging.getLogger('atlin_api:youtube')
 class YoutubeJobDetailsSubmit:
     _required_fields = ["option_type","option_value","actions","video_count"]
     def __init__(self,
@@ -39,7 +40,7 @@ class YoutubeJobDetailsSubmit:
     def actions(self, value):
         if not isinstance(value, list):
             raise TypeError("Should be of type list")
-        valid_values =  ["METADATA", "COMMENTS"]
+        valid_values =  ["METADATA", "COMMENT"]
         if not all(key in valid_values for key in value):
             raise ValueError(f"Contains invalid value. Valid values are: {', '.join(valid_values)}")
         self._actions = value
@@ -51,7 +52,11 @@ class YoutubeJobDetailsSubmit:
     @video_count.setter
     def video_count(self, value):
         if not isinstance(value, int):
-            raise TypeError(f"value should be an integer.")
+            try:
+                value = int(value)
+            except ValueError as exc:
+                raise TypeError(f"value should be an integer.")
+
         self._video_count = value
     
     def to_dict(self):
@@ -111,12 +116,15 @@ class YoutubeJobDetailsResume:
             data = json.loads(data)
             
         if not all(key in data.keys() for key in self._required_fields.keys()):
-            raise ValueError(f"Missing key. Required keys: {', '.join(self._required_fields.keys())}")
-        for key in self._required_fields.keys():
+            for key in data:
+                if key not in self._required_fields.keys():
+                    logger.warning("YoutubeJobDetails missing key %s", key)
+            # raise ValueError(f"Missing key. Required keys: {', '.join(self._required_fields.keys())}")
+        for key in data:
             setattr(self, key, data[key])
         
 class YoutubeJobDetails:
-    _required_fields = ["job_name", "job_submit", "job_resume"]
+    _required_fields = ["job_submit", "job_resume"]
     
     def __init__(self,
                  job_name: str = '',
@@ -138,7 +146,7 @@ class YoutubeJobDetails:
             
         if not all(key in data.keys() for key in self._required_fields):
             raise ValueError(f"missing required value. Required values: {', '.join(self._required_fields)}")
-        setattr(self, "job_name", data['job_name'])
+        # setattr(self, "job_name", data['job_name'])
         self.job_submit.from_json(data['job_submit'])
         self.job_resume.from_json(data['job_resume'])
             

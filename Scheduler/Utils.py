@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-WAIT_TIME = 1 # Amount of time to sleep before checking the data base for new jobs
+WAIT_TIME = 30 # Amount of time to sleep before checking the data base for new jobs
 BASE_DIR = BASE_DIR = Path(__file__).resolve().parent.parent
 SCHEDULER_DIR = os.path.join(BASE_DIR, 'Scheduler')
 

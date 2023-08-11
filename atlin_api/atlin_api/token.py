@@ -129,6 +129,15 @@ class Token(ABC):
             raise ValueError(f"Missing key. Required keys are {self._required_keys}")
 
         for key in self._required_keys:
+            if key == 'token_detail':
+                required_token_details = self.required_token_details()
+                for key_t in required_token_details:
+                    if not isinstance(data[key][key_t], required_token_details[key_t]):
+                        try:
+                            data[key][key_t] = required_token_details[key_t](data[key][key_t])
+                        except Exception as exc:
+                            raise exc
+
             setattr(self, key, data[key])
 
     def to_json(self):

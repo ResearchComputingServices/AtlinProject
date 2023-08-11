@@ -126,6 +126,7 @@ class Videos:
                     self._youtube.state.videos_ids = original_videos_ids[start:len(original_videos_ids)]
                 else:
                     slicing = False
+                    self._youtube.state.quota_exceeded = True
         except:
             ex = traceback.format_exc()
             st = log_format("get_videos_and_videocreators",ex)

@@ -3,6 +3,7 @@ from abc import ABC
 from inspect import currentframe, getframeinfo
 import logging
 import json
+from datetime import datetime
 
 # from uuid import uuid4, UUID
 import requests
@@ -179,7 +180,18 @@ class AtlinBase(ABC):
     def job_update(self, job_uid, data):
         """Updates a job"""
         encoded_url = f"{self.url_api}job/{job_uid}"
-        return self._request_put(encoded_url, None, None, data)
+        keep_fields = [
+            "job_status",
+            "modify_date",
+            "complete_date",
+            "output_path",
+            "job_message",
+            "job_detail",
+        ]
+        filtered_data = {key: data[key] for key in data if key in keep_fields}
+        # update the modify date
+        filtered_data['modify_date'] = datetime.now().isoformat()
+        return self._request_put(encoded_url, None, None, filtered_data)
 
     def job_delete(self, job_uid):
         """Deletes a job given a job_uid"""
@@ -224,7 +236,14 @@ class AtlinBase(ABC):
             )
         encoded_url = f"{self.url_api}job/status/{job_uid}"
         body = dict(job_status=job_status)
-        return self._request_put(encoded_url, None, None, body)
+        response = self._request_put(encoded_url, None, None, body)
+        if job_status == JobStatus.failed or job_status == JobStatus.success:
+            if response.ok:
+                if not self.job_update(
+                    job_uid=job_uid, data={"complete_date": datetime.now().isoformat()}
+                ).ok:
+                    logging.warning("Failed to update complete_date")
+        return response
 
     def token_get(
         self,
