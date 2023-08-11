@@ -105,6 +105,24 @@ class JobScheduler:
         return response
 
     ############################################################################################
+    # Helper function that returns a list of currently used token_uids
+    def _getCurrentlyUsedTokenIDs(self) -> list:
+        
+        usedTokenIDs = []
+        
+        try:
+            runningJobsList = self._getJobs(JobStatus().running).json()
+        
+            for job in runningJobsList:
+                usedTokenIDs.append(job['token_uid'])
+        
+        except Exception as e:
+            self.logger_.error(e)
+            print('ERROR: _getCurrentlyUsedTokenIDs: ', e) 
+        
+        return usedTokenIDs
+
+    ############################################################################################
     # This function compares rows in the jobs table with the status CREATED with those that are 
     # currently status RUNNING. If the token_uid of a CREATED job is not currenly used by a 
     # RUNNING job it is added to the returned list.
@@ -113,30 +131,31 @@ class JobScheduler:
         runnableJobs = []
         
         try:
-            createdJobs = self._getJobs(JobStatus().created)
-            runningJobs = self._getJobs(JobStatus().running)
-             
-            print(type(runningJobs))   
-            print(type(runningJobs.json()))
+            createdJobs = self._getJobs(JobStatus().created).json()
             
-            input()
-               
+            usedTokenIDs = self._getCurrentlyUsedTokenIDs()
+            
+            for job in createdJobs:
+                if job['token_uid'] not in usedTokenIDs:
+                    runnableJobs.append(job)   
+                    usedTokenIDs.append(job['token_uid'])
+             
         except Exception as e:
             self.logger_.error(e)
             print('ERROR: _checkDataBaseForRunnableJobs: ', e) 
             
         return runnableJobs
+    
     ############################################################################################
     # This function checks the data base for any rows in the JobsTable which has a job
     # status set to CREATED
     def _checkDataBaseForJobsToSubmit(self) -> None:
         
         try:
-            
-            self._checkDataBaseForRunnableJobs()
+            runnableJobs = self._checkDataBaseForRunnableJobs()
                       
             # This function will submit the jobs to be run on seperate processes
-            # self._submitJobs(createdJobs.json())
+            self._submitJobs(runnableJobs)
                
         except Exception as e:
             self.logger_.error(e)
