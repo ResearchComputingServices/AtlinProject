@@ -66,7 +66,7 @@ class JobScheduler:
     # This function will take in a list of dictionarys which describe a job and creates seperate
     # threads to run them
     def _submitJobs(self, 
-                   listOfJobJSON : List[any]):
+                    listOfJobJSON : List[any]):
 
         # TODO: it would be nice to confirm that the items in the list are dictionaries with the correct key-value pairs
 
@@ -107,19 +107,42 @@ class JobScheduler:
         return response
 
     ############################################################################################
-    # This function checks the data base for any rows in the JobsTable which has a job
-    # status set to CREATED
-    def _checkDataBaseForNewJobs(self) -> None:
+    # This function compares rows in the jobs table with the status CREATED with those that are 
+    # currently status RUNNING. If the token_uid of a CREATED job is not currenly used by a 
+    # RUNNING job it is added to the returned list.
+    def _checkDataBaseForRunnableJobs(self) -> list:
+        
+        runnableJobs = []
         
         try:
-            response = self._getJobs(JobStatus().created)
-    
-            # This function will submit the jobs to be run on seperate processes
-            self._submitJobs(response.json())
+            createdJobs = self._getJobs(JobStatus().created)
+            runningJobs = self._getJobs(JobStatus().running)
+             
+            print(type(runningJobs))   
+            print(type(runningJobs.json()))
+            
+            input()
                
         except Exception as e:
             self.logger_.error(e)
-            print('ERROR: checkDataBaseForNewJobs: ', e) 
+            print('ERROR: _checkDataBaseForRunnableJobs: ', e) 
+            
+        return runnableJobs
+    ############################################################################################
+    # This function checks the data base for any rows in the JobsTable which has a job
+    # status set to CREATED
+    def _checkDataBaseForJobsToSubmit(self) -> None:
+        
+        try:
+            
+            self._checkDataBaseForRunnableJobs()
+                      
+            # This function will submit the jobs to be run on seperate processes
+            # self._submitJobs(createdJobs.json())
+               
+        except Exception as e:
+            self.logger_.error(e)
+            print('ERROR: _checkDataBaseForJobsToSubmit: ', e) 
 
     ############################################################################################
     # This function checks the data base for any rows in the JobsTable which has a job
@@ -172,7 +195,7 @@ class JobScheduler:
             # This function will check the database for news and return a list of dictionaries with
             # the row ID of the new job
             self.logger_.info('Checking jobs ready...')
-            self._checkDataBaseForNewJobs()
+            self._checkDataBaseForJobsToSubmit()
             
             # don't spam the API
             time.sleep(WAIT_TIME)
