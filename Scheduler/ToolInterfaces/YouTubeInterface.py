@@ -11,8 +11,10 @@ from pathlib import Path
 import os
 import random
 from datetime import datetime
+from datetime import timedelta
 import json
 from dateutil import parser
+import time
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_DIR="OUTPUT_DATA"
@@ -356,8 +358,8 @@ def retrieving_token():
         try:
             atlin_yt_job.token.from_json(response.json())
         except Exception as e:
-            logger.debug(f"Quota could not been fetch {e}")
-            save_job_message(msg=f"Quota could not been fetch {e}")
+            logger.debug(f"API Token could not been fetch {e}")
+            save_job_message(msg=f"API Token could not been fetch {e}")
             retrieved = False
     else:
         logger.debug(f"Token couldn't been retrieved.")
@@ -386,7 +388,7 @@ def to_local_zone(datestring):
 ####################################################################################################
 #
 ####################################################################################################
-def is_24hrs_pass():
+def is_24hrs_pass_old():
 
     execute = True
 
@@ -402,17 +404,59 @@ def is_24hrs_pass():
     print(delta)
     print(delta_hours)
 
-    if delta_hours<24:
-        execute = False
+    #if delta_hours<24:
+    #    execute = False
 
     return execute
 
+####################################################################################################
+#
+####################################################################################################
+def has_quota_reset():
+
+
+    execute = True
+
+    #Get modify date in local zone
+    str_modify_date_local = to_local_zone(atlin_yt_job.job.modify_date)
+    dt_modify_date_local =  datetime.strptime(str_modify_date_local, "%Y-%m-%dT%H:%M:%S.%fZ")
+    #print ("Modify date: ")
+    #print (dt_modify_date_local)
+
+    #Set reset date
+    reset_date = dt_modify_date_local + timedelta(days=1)
+    rd = reset_date.replace(hour=4, minute=0, second=0, microsecond=0)
+
+    #print ("Reset date: ")
+    #print(reset_date)
+    #print (rd)
+
+
+    #Get current date (local zone)
+    current_date = datetime.now()
+    print ("Current date: ")
+    print (current_date)
+
+    #Difference between current date and reset date
+    delta = current_date - rd
+
+    #print ("Elapsed time: ")
+    #print(delta)
+    #print ("Elapsed seconds: ")
+    #print (delta.total_seconds())
+
+
+    if delta.total_seconds()<60:
+        execute = False
+        print ("The quota hasn't been reset.")
+
+    return execute
 
 ####################################################################################################
 #
 ####################################################################################################
 def handle_paused_jobs():
-    execute = is_24hrs_pass()
+    execute = has_quota_reset()
 
     if execute:
         if "NEW" in atlin_yt_job.job.job_detail.job_resume.videos_ids:
@@ -430,6 +474,7 @@ def handle_paused_jobs():
 ####################################################################################################
 def YouTubeInterface(job):
     try:
+        print ("====================================================================================")
         logger.info('Creating API class')
         print ("Starting job...")
 
@@ -444,32 +489,51 @@ def YouTubeInterface(job):
 
 
         #For testing only +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        #response = atlin_yt_job.job_get(job_status=[job_status.paused])
+        #response = atlin_yt_job.job_get(job_status=[job_status.created])
         #if response.status_code == 200:
         #    jobs = response.json()
         #job = jobs[0]
         #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
         atlin_yt_job.job.from_json(job)
-
-
         logger.info('Performing YouTube job:')
         logger.info(job)
 
-        retrieved = retrieving_token()
-        if not retrieved:
+        print('Performing YouTube job:')
+        print(job["job_name"])
+
+        retrieved_token = retrieving_token()
+        if not retrieved_token:
             return job_status.failed
 
-
         if atlin_yt_job.job.job_status == "CREATED":
-            print("Retrieving Info...")
+            print("Created job...")
             atlin_yt_job.job.job_status = "RUNNING"
             job_status_completed = handle_new_job()
-            print('Job Finished...')
         elif atlin_yt_job.job.job_status == "PAUSED":
-            print ("Pausing Job...")
-            job_status_completed=handle_paused_jobs()
+            print("Paused job...")
+            job_status_completed = handle_paused_jobs()
 
 
+        #if atlin_yt_job.job.job_status == "CREATED":
+        #    print("Retrieving Info for Created Job...")
+            #atlin_yt_job.job.job_status = "RUNNING"
+            #time.sleep(random.randint(30, 60))
+        #    time.sleep(10)
+            #job_status_completed = handle_new_job()
+        #    job_status_completed = job_status.paused
+        #elif atlin_yt_job.job.job_status == "PAUSED":
+        #    print ("Retrieving Info for Paused Job...")
+        #    #job_status_completed=handle_paused_jobs()
+        #    execute = has_quota_reset()
+        #    if execute:
+        #        time.sleep(10)
+        #        job_status_completed = job_status.success
+        #    else:
+        #        job_status_completed = job_status.paused
+
+        print('Job status...')
+        print (job_status_completed)
         return job_status_completed
     except:
         ex = traceback.format_exc()
