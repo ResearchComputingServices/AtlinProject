@@ -15,6 +15,7 @@ from datetime import timedelta
 import json
 from dateutil import parser
 import time
+from zipfile import ZipFile
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_DIR="OUTPUT_DATA"
@@ -26,12 +27,51 @@ class AtlinYouTubeJob(atlinAPI.Atlin):
         self.job = atlinJob.Job()
 
 
+####################################################################################################
+def zip_directory():
+
+    try:
+        output_dir = os.path.join(BASE_DIR, OUTPUT_DIR)
+        job_uid = atlin_yt_job.job.job_uid
+        job_output_directory = os.path.join(output_dir, job_uid)
+
+        zip_name = atlin_yt_job.job.job_uid + ".zip"
+        zip_name_path = os.path.join(job_output_directory,zip_name)
+
+        with ZipFile(zip_name_path, 'w') as zip_object:
+            # Traverse all files in directory
+            for folder_name, sub_folders, file_names in os.walk(job_output_directory):
+                for filename in file_names:
+                    if filename != zip_name:
+                        # Create filepath of files in directory
+                        file_path = os.path.join(folder_name, filename)
+                        # Add files to zip file
+                        zip_object.write(file_path, os.path.basename(file_path))
+
+        if os.path.exists(zip_name_path):
+            print("ZIP file created")
+            # Update database with output folder
+            atlin_yt_job.job.output_path = zip_name_path
+            response = atlin_yt_job.job_update(job_uid=atlin_yt_job.job.job_uid, data=atlin_yt_job.job.to_dict())
+        else:
+            print("ZIP file not created")
+            logger.debug(f"Zip file couldn't be created.")
+            save_job_message(msg=f"Zip file couldn't be created.")
+    except Exception as e:
+        logger.debug(f"Zip file couldn't be created. {e}")
+        save_job_message(msg=f"Zip file couldn't be created. {e}")
+
+
 
 ####################################################################################################
 def validate_output_dir(output_dir):
 
     if output_dir==None or len(output_dir)==0:
         output_dir= os.path.join(BASE_DIR, OUTPUT_DIR)
+
+    #Create a folder directory with the job_uid
+    job_uid = atlin_yt_job.job.job_uid
+    output_dir = os.path.join(output_dir,job_uid)
 
     #Check if the output directory exists, it if doesn't create it.
     if not os.path.isdir(output_dir):
@@ -149,6 +189,8 @@ def handle_state(yt):
             else:
                 job_status_completed = job_status.failed
                 save_job_message(msg=yt.state.error_description)
+            #Return zip file with results
+            zip_directory()
 
     #Save the quota
     updated_quota = yt.state.current_quota
@@ -157,8 +199,10 @@ def handle_state(yt):
     print ("Status: ")
     print (job_status_completed)
     response = atlin_yt_job.token_set_quota(atlin_yt_job.token.token_uid, job_platform.youtube, updated_quota)
+
     if response.status_code!=200:
         logger.debug("An error occurred when updating the quota.")
+
     return job_status_completed
 
 
@@ -489,7 +533,7 @@ def YouTubeInterface(job):
 
 
         #For testing only +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        #response = atlin_yt_job.job_get(job_status=[job_status.created])
+        #response = atlin_yt_job.job_get(job_status=[job_status.paused])
         #if response.status_code == 200:
         #    jobs = response.json()
         #job = jobs[0]
