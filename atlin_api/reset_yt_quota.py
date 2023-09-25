@@ -1,13 +1,7 @@
 import atlin_api.atlin as atlinAPI
+import Config as config
 
-
-# valid values from test database
-user_uid = "b1d93700-aee5-4eca-939d-cf8b866f2be4"
-# job_uid = "9ef8b11b-0d51-4303-ada0-111ed9f6fbaa"
-atlin = atlinAPI.Atlin("http://localhost:6010")
-
-#Let's get all tokens in the DB
-
+atlin = atlinAPI.Atlin(config.atlin_api_address)
 
 def reset_Youtube_quota():
         social_platform = "YOUTUBE"

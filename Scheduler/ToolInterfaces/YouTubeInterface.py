@@ -12,10 +12,9 @@ import os
 import random
 from datetime import datetime
 from datetime import timedelta
-import json
 from dateutil import parser
-import time
 from zipfile import ZipFile
+import Config as config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_DIR="OUTPUT_DATA"
@@ -464,17 +463,10 @@ def has_quota_reset():
     #Get modify date in local zone
     str_modify_date_local = to_local_zone(atlin_yt_job.job.modify_date)
     dt_modify_date_local =  datetime.strptime(str_modify_date_local, "%Y-%m-%dT%H:%M:%S.%fZ")
-    #print ("Modify date: ")
-    #print (dt_modify_date_local)
 
     #Set reset date
     reset_date = dt_modify_date_local + timedelta(days=1)
     rd = reset_date.replace(hour=4, minute=0, second=0, microsecond=0)
-
-    #print ("Reset date: ")
-    #print(reset_date)
-    #print (rd)
-
 
     #Get current date (local zone)
     current_date = datetime.now()
@@ -483,12 +475,6 @@ def has_quota_reset():
 
     #Difference between current date and reset date
     delta = current_date - rd
-
-    #print ("Elapsed time: ")
-    #print(delta)
-    #print ("Elapsed seconds: ")
-    #print (delta.total_seconds())
-
 
     if delta.total_seconds()<60:
         execute = False
@@ -523,21 +509,12 @@ def YouTubeInterface(job):
         print ("Starting job...")
 
         global atlin_yt_job
-        atlin_yt_job= AtlinYouTubeJob("http://localhost:6010")    #ToDo: ####---> Question: From where do I get this address?
-
+        atlin_yt_job= AtlinYouTubeJob(config.atlin_api_address)
         global job_status
         job_status = atlinAPI.JobStatus()
 
         global job_platform
         job_platform = atlinAPI.JobPlatform()
-
-
-        #For testing only +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        #response = atlin_yt_job.job_get(job_status=[job_status.paused])
-        #if response.status_code == 200:
-        #    jobs = response.json()
-        #job = jobs[0]
-        #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         atlin_yt_job.job.from_json(job)
         logger.info('Performing YouTube job:')
@@ -558,24 +535,6 @@ def YouTubeInterface(job):
             print("Paused job...")
             job_status_completed = handle_paused_jobs()
 
-
-        #if atlin_yt_job.job.job_status == "CREATED":
-        #    print("Retrieving Info for Created Job...")
-            #atlin_yt_job.job.job_status = "RUNNING"
-            #time.sleep(random.randint(30, 60))
-        #    time.sleep(10)
-            #job_status_completed = handle_new_job()
-        #    job_status_completed = job_status.paused
-        #elif atlin_yt_job.job.job_status == "PAUSED":
-        #    print ("Retrieving Info for Paused Job...")
-        #    #job_status_completed=handle_paused_jobs()
-        #    execute = has_quota_reset()
-        #    if execute:
-        #        time.sleep(10)
-        #        job_status_completed = job_status.success
-        #    else:
-        #        job_status_completed = job_status.paused
-
         print('Job status...')
         print (job_status_completed)
         return job_status_completed
@@ -587,9 +546,3 @@ def YouTubeInterface(job):
         save_job_message(msg =f"An exception occurred when executing the job {ex}")
         return job_status.failed
 
-################################################
-#jobDict = {"status": "NewJob", "option": "video", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/watch?v=-DkpWjlJQIY", "videos": 0}
-#jobDict = {"status": "NewJob", "option": "playlist", "actions": ["metadata", "comments"], "input" : "https://www.youtube.com/playlist?list=PLADighMnAG4DczAOY7i6-nJhB9sQDhIoR", "videos": 0}
-#jobDict = {"status": "NewJob", "option": "query", "actions": ["metadata", "comments"], "input" : "pao de queijo minero", "videos": 50}
-#jobDict = {"status": "NewJob", "option": "query", "actions": ["comments"], "input" : "pao de queijo liquidificador", "videos": 50}
-#YouTubeInterface(None)
