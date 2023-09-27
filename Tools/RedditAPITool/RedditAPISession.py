@@ -27,14 +27,9 @@ from RedditAPITool.RedditUtils import *
 ##############################################################################################################
 
 class RedditAPISession:
-
+       
     #########################################################################
-   
-    #########################################################################
-    
-    
-    #########################################################################
-    # CONSTRUCTOR(S)
+    # CONSTRUCTOR
     #########################################################################
     
     def __init__(   self,
@@ -52,6 +47,11 @@ class RedditAPISession:
         self.numRequest_ = 0
         
         self.generateAuthentifiedHeader()
+        
+        # initialize logger
+        username = credientalsDict['username']
+        self.logger_ = logging.getLogger(f'RedditAPISession {username}' )       
+        self.logger_.info('Reddit API Session logger initialized.')
         
     #########################################################################
     # PRIVATE FUNCTIONS
@@ -87,7 +87,7 @@ class RedditAPISession:
                             jobDict):
 
         urlString = API_BASE + 'r/'+jobDict['post'][0]+'/comments/'+jobDict['post'][1]
-                    
+
         return self.requestGet(urlString=urlString,
                                numResultsRequested = jobDict['n'])
 
@@ -163,10 +163,10 @@ class RedditAPISession:
         retFlag = False
                           
         if 'error' in resp.keys():  
-            logging.error('Error Code:', resp['error'])
+            self.logger_.error('Error Code:', resp['error'])
 
             if 'error_description' in resp.keys():
-                logging.error('Error Msg:',resp['error_description'])
+                self.logger_.error('Error Msg:',resp['error_description'])
             
             if HALT:    
                 input('Press ENTER to continue...')
@@ -181,6 +181,8 @@ class RedditAPISession:
     def requestGet(self,
                    urlString,
                    numResultsRequested):
+        
+        self.logger_.info(urlString)
         
         sucessFlag = False
                     
@@ -240,7 +242,7 @@ class RedditAPISession:
         elif len(jobDict['keyword']) > 0:
             successFlag = self.getSubredditKeywordSearch(jobDict)
         else:
-            logging.warning('[WARNING]: HandlejobDict: No ACTION specified for subreddit',flush=True)  
+            self.logger_.warning('[WARNING]: HandlejobDict: No ACTION specified for subreddit',flush=True)  
             successFlag = False
             
         return successFlag
@@ -256,7 +258,7 @@ class RedditAPISession:
         elif jobDict['getcomments'] == 1:
             successFlag = self.getUserComments(jobDict)
         else:
-            logging.warning('[WARNING]: HandlejobDict: No ACTION specified for user',flush=True)
+            self.logger_.warning('[WARNING]: HandlejobDict: No ACTION specified for user',flush=True)
             successFlag = False
         
         return successFlag
@@ -276,7 +278,7 @@ class RedditAPISession:
     ####################################################################################################
     # This function performs the API call which is described in the jobDict dictionary.
     def HandleJobDict(self, jobDict) -> None:      
-            
+                   
         successFlag = False
         
         self.extractParams(jobDict)
@@ -289,7 +291,7 @@ class RedditAPISession:
         elif  jobDict['post'] != None:
             successFlag = self.handlePostJob(jobDict)
         else:
-            logging.warning('[WARNING]: HandlejobDict: No ITEM ID specified.')  
+            self.logger_.warning('[WARNING]: HandlejobDict: No ITEM ID specified.')  
             print('[WARNING]: HandlejobDict: No ITEM ID specified.')  
         
         return successFlag
@@ -331,9 +333,9 @@ class RedditAPISession:
        
     ####################################################################################################
     #
-    def End(arg1):
+    def End(self,arg1):
         # TODO: do stuff here to end the session cleanly
-        logging.debug('END SESSION')
+        self.logger_.debug('END SESSION')
         
         return 
         

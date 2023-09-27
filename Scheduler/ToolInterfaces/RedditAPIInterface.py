@@ -68,28 +68,7 @@ def getCredentialsDict(jobJSON) -> dict:
     return tokenDict
 
 ####################################################################################################
-# { 'sortBy': 'new', 
-#   'timeFrame': 'all', 
-#   'n': 1, 
-#   'subreddit': 'canada', 
-#   'user': '', 
-#   'post': ['', ''], 
-#   'keyword': '', 
-#   'getposts': 1, 
-#   'getcomments': 0}
-# {
-#   "job_submit": {
-#     "actions": [
-#       "KEYWORD"
-#     ],
-#     "post_list": "",
-#     "option_type": "POST",
-#     "sort_option": "TOP",
-#     "keyword_list": "maple",
-#     "response_count": "10",
-#     "subreddit_list": "Canada"
-#   }
-# }
+#
 ####################################################################################################
 def getJobDict(jobJSON) -> dict:
     
@@ -118,22 +97,21 @@ def getJobDict(jobJSON) -> dict:
 ####################################################################################################
 def RedditInterface(jobJSON):
    
-    # TODO: remove this after dev
-    logging.info('\n\n\n HERE HERE HERE \n\n\n')
-
-    logging.info('RedditInterface: Preforming Reddit job:')
+    logger = logging.getLogger('RedditInterface')
+     
+    job_uid = jobJSON['job_uid']
+    logger.info(f'Preforming Reddit job: {job_uid}')
     
     # the credientals  and job details from the JOB_JSON object    
     jobDict = getJobDict(jobJSON)
-    logging.info('RedditInterface:', jobDict)
+    logger.info('RedditInterface:', jobDict)
     
     credentialsDict = getCredentialsDict(jobJSON)
-    
-    logging.info('RedditInterface: credentialsDict RECIEVED')
+    logger.info('credentialsDict RECIEVED')
     
     # connect to reddit API
     session = RedditAPISession(credentialsDict) 
-    logging.info('RedditInterface: RedditAPISession started.')
+    logger.info('RedditAPISession started.')
     
     # the return value
     jobStatus = None
@@ -141,7 +119,8 @@ def RedditInterface(jobJSON):
     # execute the job as defined by the jobDict
     if session.HandleJobDict(jobDict):
         
-        logging.info('RedditInterface: RedditAPISession Job completed.')
+        logger.info('RedditAPISession Job completed.')
+        
         # TODO: Get the correct folder path
         save_path = str('./')  
         if session.SaveResponses(save_path)    :
@@ -157,8 +136,8 @@ def RedditInterface(jobJSON):
         jobStatus = JobStatus().success
     
     else:
-        jobStatus = JobStatus().failure
-        logging.info('RedditInterface: RedditAPISession Job FAILED.')
+        jobStatus = JobStatus().failed
+        logger.info('RedditInterface: RedditAPISession Job FAILED.')
     
     # disconnect from the reddit API
     session.End()

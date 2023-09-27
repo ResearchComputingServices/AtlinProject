@@ -26,20 +26,6 @@ from ToolInterfaces.YouTubeInterface import YouTubeInterface
 class JobScheduler:
 
     #########################################################################
-    # MEMBER(S)
-    #########################################################################   
-    atlin_ = None 
-    
-    keepRunning_ = True
-    waitTime_ = 60 # the number of seconds to wait before checking for new jobs
-     
-    # This dictionary connects job type flags to the tool which handles them
-    jobHandleDict = {}
-    
-    # logger
-    logger_ = None
-     
-    #########################################################################
     # CONSTRUCTOR
     #########################################################################
     
@@ -53,8 +39,10 @@ class JobScheduler:
         
         self.atlin_ = Atlin(dataBaseDomain)
 
+        self.jobHandleDict = {}
+
         logging.basicConfig(level=logging.INFO)
-        self.logger_ = logging.getLogger(__name__)
+        self.logger_ = logging.getLogger('Scheduler')
                     
     #########################################################################
     # PRIVATE FUNCTIONS
@@ -65,13 +53,14 @@ class JobScheduler:
     # threads to run them
     def _submitJobs(self, 
                     listOfJobJSON : List[any]):
+        
+        self.logger_.info('Submitting jobs')
 
         # TODO: it would be nice to confirm that the items in the list are dictionaries with the correct key-value pairs
 
         # Create a context manager to handle the opening/closing of processes
         with concurrent.futures.ProcessPoolExecutor() as executor:
-            for jobJSON in listOfJobJSON:           
-                                       
+            for jobJSON in listOfJobJSON:                                          
                 # get the data from the job dictionary    
                 jobType = jobJSON['social_platform']
             
@@ -79,9 +68,9 @@ class JobScheduler:
                     # start a process that will execute the correct script
                     executor.submit(genericInterface,
                                     self.jobHandleDict[jobType],
-                                    jobJSON) 
+                                    jobJSON)                     
                 else:
-                    print('[ERROR]: Unknown Job Type: ', jobType)
+                    self.logger_.error(f'Unknown Job Type: {jobType}')
             
             # this allows the context manager to return before each process is finished
             # which means the scheduler is free to go back and check for other new jobs
@@ -100,7 +89,7 @@ class JobScheduler:
             response = self.atlin_.job_get(job_status=[jobStatus])
         except Exception as e:
             self.logger_.error(e)  
-            print('ERROR: _getJobs: ',e)    
+            print(f'ERROR: _getJobs: {e}')    
 
         return response
 
@@ -117,8 +106,7 @@ class JobScheduler:
                 usedTokenIDs.append(job['token_uid'])
         
         except Exception as e:
-            self.logger_.error(e)
-            print('ERROR: _getCurrentlyUsedTokenIDs: ', e) 
+            self.logger_.error(f'_getCurrentlyUsedTokenIDs: {e}')
         
         return usedTokenIDs
 
@@ -136,9 +124,8 @@ class JobScheduler:
             potentiallyRunnableJobs.sort(key= lambda job: job['create_date'])
                 
         except Exception as e:
-            self.logger_.error(e)
-            print('ERROR: _getCurrentlyUsedTokenIDs: ', e) 
-        
+            self.logger_.error(f'_getCurrentlyUsedTokenIDs: {e}')
+                    
         return potentiallyRunnableJobs
         
 
@@ -151,7 +138,7 @@ class JobScheduler:
         runnableJobs = []
         
         try:
-            # createdJobs = self._getJobs(JobStatus().created).json()
+            self.logger_.info('Checking for runnable jobs')
             potentiallyRunnableJobs = self._getPotentiallyRunnableJobs()
             usedTokenIDs = self._getCurrentlyUsedTokenIDs()
             
@@ -160,11 +147,12 @@ class JobScheduler:
                 if job['token_uid'] not in usedTokenIDs:
                     runnableJobs.append(job)   
                     usedTokenIDs.append(job['token_uid'])
+                    
+            self.logger_.info(f'{len(runnableJobs)} runnable job(s) found')
              
         except Exception as e:
-            self.logger_.error(e)
-            print('ERROR: _checkDataBaseForRunnableJobs: ', e) 
-            
+            self.logger_.error(f'_checkDataBaseForRunnableJobs: {e}')
+              
         return runnableJobs
     
     ############################################################################################
@@ -176,18 +164,18 @@ class JobScheduler:
             runnableJobs = self._checkDataBaseForRunnableJobs()
                       
             # This function will submit the jobs to be run on seperate processes
-            self._submitJobs(runnableJobs)
+            if len(runnableJobs) > 0:
+                self._submitJobs(runnableJobs)
                
         except Exception as e:
-            self.logger_.error(e)
-            print('ERROR: _checkDataBaseForJobsToSubmit: ', e) 
-                       
+            self.logger_.error(f'_checkDataBaseForJobsToSubmit: {e}')
+                                   
     ############################################################################################
     # This function checks for any sort of exit conditions
     def _checkExit(self):
-        logging.info('CheckExit')
+        self.logger_.info('Check for exit conditions')
         
-        return True
+        self.keepRunning_ = True
      
     #########################################################################
     # PUBLIC FUNCTIONS
@@ -201,8 +189,9 @@ class JobScheduler:
 
         if callable(toolFunctionPoint):
             self.jobHandleDict[jobType] = toolFunctionPoint
+            self.logger_.info(f'Handler for job type {jobType} added.')
         else:
-            logging.error('AddJobType: argument \'toolFunctionPoint\' not a callable type')
+            self.logger_.error('AddJobType: argument \'toolFunctionPoint\' not a callable type')
             raise TypeError
                 
     ############################################################################################
@@ -213,14 +202,16 @@ class JobScheduler:
             
             # This function will check the database for news and return a list of dictionaries with
             # the row ID of the new job
-            self.logger_.info('Checking jobs ready...')
             self._checkDataBaseForJobsToSubmit()
-            
-            # don't spam the API
-            time.sleep(self.waitTime_)
-            
+
             # check if some type of exit condition has been set
             self._checkExit()
+
+            # don't spam the API
+            self.logger_.info(f'Sleep for {self.waitTime_} seconds...')
+            time.sleep(self.waitTime_)
+            
+
 
 ##############################################################################################################
 
