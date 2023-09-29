@@ -155,8 +155,6 @@ def save_job_state(state):
 
     return job_status_completed
 
-
-
 ####################################################################################################
 def change_job_status(new_job_status):
     response = atlin_yt_job.job_set_status(job_uid=atlin_yt_job.job.job_uid, job_status=new_job_status)
@@ -509,7 +507,7 @@ def YouTubeInterface(job):
         print ("Starting job...")
 
         global atlin_yt_job
-        atlin_yt_job= AtlinYouTubeJob(config.atlin_api_address)
+        atlin_yt_job= AtlinYouTubeJob(config.ATLIN_API_ADDRESS)
         global job_status
         job_status = atlinAPI.JobStatus()
 

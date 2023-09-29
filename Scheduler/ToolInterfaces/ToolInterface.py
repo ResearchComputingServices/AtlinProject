@@ -2,7 +2,7 @@ import logging
 import time
 
 from Scheduler.Utils import *
-
+import Config as config
 from atlin_api.atlin_api import *
 
 import sys
@@ -16,7 +16,7 @@ def updateJobStatus(job_uid, status) -> None:
     logger = logging.getLogger('genericInterface')
        
     # Set up connection to database
-    atlin = Atlin("http://localhost:6010")
+    atlin = Atlin(config.ATLIN_API_ADDRESS)
 
     statusCode = atlin.job_set_status(job_uid, status).status_code
     

@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 import sys
-import time
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
 sys.path.insert(0, BASE_DIR)
@@ -9,13 +9,14 @@ sys.path.insert(0, BASE_DIR)
 from Tools.RedditAPITool.RedditAPISession import RedditAPISession
 from Tools.RedditAPITool.RedditUtils import *
 from atlin_api.atlin_api import *
+import Config as config
 
 ####################################################################################################
 #
 ####################################################################################################
 
 def UpdateQuota(jobJSON, quotaUsed) -> None:
-    atlin = Atlin("http://localhost:6010")
+    atlin = Atlin(config.ATLIN_API_ADDRESS)
 
     token_uid = jobJSON['token_uid']
     
@@ -24,11 +25,25 @@ def UpdateQuota(jobJSON, quotaUsed) -> None:
     return
 
 ####################################################################################################
+#
+####################################################################################################
+
+def UpdateOutputPath(jobJSON, output_path) -> None:
+    atlin = Atlin(config.ATLIN_API_ADDRESS)
+
+    jobJSON['output_path'] = output_path
+
+    atlin.job_update(job_uid = jobJSON['job_uid'],
+                     data = jobJSON.to_dict())
+        
+    return
+
+####################################################################################################
 # This function handles the get request and any associated errors
 ####################################################################################################
 def getCredentialsDictFromDB(jobJSON) -> dict:
 
-    atlin = Atlin("http://localhost:6010")
+    atlin = Atlin(config.ATLIN_API_ADDRESS)
 
     tokenReturn = {}
     try :          
@@ -74,8 +89,6 @@ def getJobDict(jobJSON) -> dict:
     
     jobDictDB = jobJSON['job_detail']['job_submit']
     
-    print(jobDictDB)
-
     # TODO: Figure out why some keys are not working out (ie ones in quotes)    
     jobDict = { REDDIT_JOB_DETAIL_SORT_BY : jobDictDB['sort_option'].lower(),
                 REDDIT_JOB_DETAIL_TIME_FRAME : 'all',  
@@ -95,6 +108,23 @@ def getJobDict(jobJSON) -> dict:
 ####################################################################################################
 #
 ####################################################################################################
+def GenerateOutputDirectory(jobJSON) -> str:
+    
+    job_uid = jobJSON['job_uid']
+    
+    output_path = os.path.join(os.getcwd(), job_uid)
+
+    #Check if the output directory exists, it if doesn't create it.
+    if not os.path.isdir(output_path):
+        os.mkdir(output_path)
+
+    UpdateOutputPath(jobJSON, output_path)
+
+    return output_path   
+
+####################################################################################################
+#
+####################################################################################################
 def RedditInterface(jobJSON):
    
     logger = logging.getLogger('RedditInterface')
@@ -104,10 +134,13 @@ def RedditInterface(jobJSON):
     
     # the credientals  and job details from the JOB_JSON object    
     jobDict = getJobDict(jobJSON)
-    logger.info('RedditInterface:', jobDict)
+    logger.info('RedditInterface jobDict:', jobDict)
     
     credentialsDict = getCredentialsDict(jobJSON)
     logger.info('credentialsDict RECIEVED')
+    
+    # create an output directory to store the collected data in
+    GenerateOutputDirectory(jobJSON)
     
     # connect to reddit API
     session = RedditAPISession(credentialsDict) 
@@ -121,9 +154,7 @@ def RedditInterface(jobJSON):
         
         logger.info('RedditAPISession Job completed.')
         
-        # TODO: Get the correct folder path
-        save_path = str('./')  
-        if session.SaveResponses(save_path)    :
+        if session.SaveResponses(jobJSON['output_path']):
             logging.info('RedditInterface: Data saved.')
         else:
             logging.info('RedditInterface: Unable to save data.')
@@ -148,9 +179,7 @@ def RedditInterface(jobJSON):
 # Test Code:
 if __name__ == '__main__':     
 
-    dataBaseDomain = "http://localhost:6010"
-    
-    atlin = Atlin(dataBaseDomain)
+    atlin = Atlin(config.ATLIN_API_ADDRESS)
 
     response = atlin.job_get_by_uid('9978d901-96e6-4a80-bfec-3a7dd87d81ab')
     

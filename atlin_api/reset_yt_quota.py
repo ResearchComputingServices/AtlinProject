@@ -1,7 +1,7 @@
 import atlin_api.atlin as atlinAPI
 import Config as config
 
-atlin = atlinAPI.Atlin(config.atlin_api_address)
+atlin = atlinAPI.Atlin(config.ATLIN_API_ADDRESS)
 
 def reset_Youtube_quota():
         social_platform = "YOUTUBE"

@@ -1,1 +1,1 @@
-atlin_api_address ="http://localhost:6010"
+ATLIN_API_ADDRESS ="http://localhost:6010"

@@ -13,7 +13,7 @@ sys.path.insert(0, BASE_DIR)
 from atlin_api.atlin_api import *
 
 from Scheduler.Utils import  *
-
+import Config as config
 from ToolInterfaces.ToolInterface import genericInterface
 from ToolInterfaces.RedditAPIInterface import RedditInterface
 from ToolInterfaces.CrawlerInterface import CrawlerInterface
@@ -30,7 +30,7 @@ class JobScheduler:
     #########################################################################
     
     def __init__(   self,
-                    dataBaseDomain = "http://localhost:6010",
+                    dataBaseDomain = config.ATLIN_API_ADDRESS,
                     waitTime = 60):
         
         self.waitTime_ = waitTime
