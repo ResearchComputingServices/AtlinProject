@@ -278,13 +278,15 @@ class RedditAPISession:
     ####################################################################################################
     # This function performs the API call which is described in the jobDict dictionary.
     def HandleJobDict(self, jobDict) -> None:      
-                   
+        
+                
         successFlag = False
         
         self.extractParams(jobDict)
                 
         # This block of code calls the API command which is described in the jobDict          
         if jobDict['subreddit'] != None:
+            self.logger_.warning('[WARNING]: HandlejobDict: No ITEM ID specified.') 
             successFlag = self.handleSubRedditJob(jobDict)        
         elif jobDict['user'] != None:
             successFlag = self.handleUserJob(jobDict)       
@@ -292,20 +294,21 @@ class RedditAPISession:
             successFlag = self.handlePostJob(jobDict)
         else:
             self.logger_.warning('[WARNING]: HandlejobDict: No ITEM ID specified.')  
-            print('[WARNING]: HandlejobDict: No ITEM ID specified.')  
         
         return successFlag
     
     ####################################################################################################
     # Get number of requests sent for the last job
     def SaveResponses(self,
-                      folderPath : str) -> bool:
+                      jobJSON) -> bool:
         
         successFlag = False
         
+        folderPath = jobJSON['output_path']
+        
         # check if the file path exists and is accessbile then write the listOfResponses_ to the file
         if os.path.exists(folderPath):          
-            filename = str(uuid.uuid1())+'.json'
+            filename = jobJSON['job_name']+'.json'
             
             filePath = os.path.join(folderPath, filename)
             file = open(filePath, "w")
@@ -333,10 +336,9 @@ class RedditAPISession:
        
     ####################################################################################################
     #
-    def End(self,arg1):
+    def End(self):
         # TODO: do stuff here to end the session cleanly
-        self.logger_.debug('END SESSION')
-        
+       
         return 
         
 

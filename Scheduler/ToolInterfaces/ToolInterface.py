@@ -31,6 +31,8 @@ def updateJobStatus(job_uid, status) -> None:
 # A Generic Tool Interface which ensures the job status is updated correctly
 def genericInterface(toolFunctionPointer, jobJSON):
 
+    logger = logging.getLogger('genericInterface')
+
     job_uid = jobJSON['job_uid']
                    
     # Set the job status to "RUNNING"
@@ -41,5 +43,5 @@ def genericInterface(toolFunctionPointer, jobJSON):
     
     # update job status to as either SUCCESS or FAILURE
     updateJobStatus(job_uid, jobCompleteStatus)
-     
+    
     return  

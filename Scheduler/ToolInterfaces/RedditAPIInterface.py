@@ -29,15 +29,37 @@ def UpdateQuota(jobJSON, quotaUsed) -> None:
 ####################################################################################################
 
 def UpdateOutputPath(jobJSON, output_path) -> None:
-    atlin = Atlin(config.ATLIN_API_ADDRESS)
+    
+    logger = logging.getLogger('RedditInterface')
+    
+    try:
+        atlin = Atlin(config.ATLIN_API_ADDRESS)
 
-    jobJSON['output_path'] = output_path
+        jobJSON['output_path'] = output_path
+        jobJSON['job_status'] = "RUNNING"
 
-    atlin.job_update(job_uid = jobJSON['job_uid'],
-                     data = jobJSON.to_dict())
-        
+        atlin.job_update(job_uid = jobJSON['job_uid'],
+                        data = jobJSON)
+    except Exception as e:
+        logger.debug(e)    
+    
     return
 
+####################################################################################################
+#
+####################################################################################################
+def GenerateOutputDirectory(jobJSON) -> str:
+    
+    job_uid = jobJSON['job_uid']
+    output_path = os.path.join(config.MAIN_OUTPUT_DIR, job_uid)
+
+    #Check if the output directory exists, it if doesn't create it.
+    if not os.path.isdir(output_path):
+        os.mkdir(output_path)
+
+    UpdateOutputPath(jobJSON, output_path)
+
+    return output_path   
 ####################################################################################################
 # This function handles the get request and any associated errors
 ####################################################################################################
@@ -108,23 +130,6 @@ def getJobDict(jobJSON) -> dict:
 ####################################################################################################
 #
 ####################################################################################################
-def GenerateOutputDirectory(jobJSON) -> str:
-    
-    job_uid = jobJSON['job_uid']
-    
-    output_path = os.path.join(os.getcwd(), job_uid)
-
-    #Check if the output directory exists, it if doesn't create it.
-    if not os.path.isdir(output_path):
-        os.mkdir(output_path)
-
-    UpdateOutputPath(jobJSON, output_path)
-
-    return output_path   
-
-####################################################################################################
-#
-####################################################################################################
 def RedditInterface(jobJSON):
    
     logger = logging.getLogger('RedditInterface')
@@ -141,6 +146,7 @@ def RedditInterface(jobJSON):
     
     # create an output directory to store the collected data in
     GenerateOutputDirectory(jobJSON)
+    logger.info('Output directory generated')
     
     # connect to reddit API
     session = RedditAPISession(credentialsDict) 
@@ -151,10 +157,8 @@ def RedditInterface(jobJSON):
     
     # execute the job as defined by the jobDict
     if session.HandleJobDict(jobDict):
-        
-        logger.info('RedditAPISession Job completed.')
-        
-        if session.SaveResponses(jobJSON['output_path']):
+                
+        if session.SaveResponses(jobJSON):
             logging.info('RedditInterface: Data saved.')
         else:
             logging.info('RedditInterface: Unable to save data.')
@@ -165,13 +169,15 @@ def RedditInterface(jobJSON):
 
         # update the returned job status
         jobStatus = JobStatus().success
-    
+        
+        logger.info('RedditAPISession Job completed SUCCESSFULLY.')
     else:
         jobStatus = JobStatus().failed
-        logger.info('RedditInterface: RedditAPISession Job FAILED.')
+        logger.info('RedditInterface Job completed FAILED.')
     
     # disconnect from the reddit API
     session.End()
+    logger.info('RedditInterface: session ENDED.')
 
     return  jobStatus
  

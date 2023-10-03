@@ -1,0 +1,204 @@
+10:46:59,559 numexpr.utils INFO NumExpr defaulting to 8 threads.
+10:46:59,887 Scheduler INFO Handler for job type REDDIT added.
+10:46:59,887 Scheduler INFO Handler for job type YOUTUBE added.
+10:46:59,887 Scheduler INFO Handler for job type CRAWL added.
+10:46:59,887 Scheduler INFO Checking for runnable jobs
+10:46:59,887 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'CREATED'}
+10:46:59,890 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:46:59,921 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=CREATED HTTP/1.1" 200 692
+10:46:59,922 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'PAUSED'}
+10:46:59,925 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:46:59,930 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=PAUSED HTTP/1.1" 200 2
+10:46:59,931 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'RUNNING'}
+10:46:59,933 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:46:59,939 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=RUNNING HTTP/1.1" 200 2
+10:46:59,940 Scheduler INFO 1 runnable job(s) found
+10:46:59,940 Scheduler INFO Submitting jobs
+10:47:00,1 Scheduler INFO Check for exit conditions
+10:47:00,1 Scheduler INFO Sleep for 5 seconds...
+10:47:00,4 root DEBUG Making a put request.
+url: http://localhost:6010/api/v1/job/status/f8e142ea-003f-4ee8-9822-c1229ade1649
+headers: None
+params: None
+data: {'job_status': 'RUNNING'}
+10:47:00,11 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:00,37 urllib3.connectionpool DEBUG http://localhost:6010 "PUT /api/v1/job/status/f8e142ea-003f-4ee8-9822-c1229ade1649 HTTP/1.1" 200 690
+10:47:00,39 RedditInterface INFO Preforming Reddit job: f8e142ea-003f-4ee8-9822-c1229ade1649
+10:47:00,39 RedditInterface INFO RedditInterface jobDict:
+10:47:00,39 root INFO getCredentialsDict: START
+10:47:00,39 root INFO getCredentialsDict: Sending API Get Request for creds
+10:47:00,40 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/token/49270dab-f744-4c2a-9b1d-9f425716e8d4
+headers: {'Content-Type': 'application/json'}
+params: None
+10:47:00,42 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:00,50 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/token/49270dab-f744-4c2a-9b1d-9f425716e8d4 HTTP/1.1" 200 379
+10:47:00,51 root INFO getCredentialsDict: Received
+10:47:00,52 root INFO getCredentialsDict: DONE
+10:47:00,52 RedditInterface INFO credentialsDict RECIEVED
+10:47:00,52 root DEBUG Making a put request.
+url: http://localhost:6010/api/v1/job/f8e142ea-003f-4ee8-9822-c1229ade1649
+headers: None
+params: None
+data: {'job_status': 'RUNNING', 'output_path': '/home/nickshiell/Documents/Work/SocialMediaAPIInterface/SocialMediaAPIInterface/Output/f8e142ea-003f-4ee8-9822-c1229ade1649', 'job_message': None, 'job_detail': {'job_submit': {'actions': ['POST'], 'post_list': '', 'option_type': 'POST', 'sort_option': 'NEW', 'keyword_list': 'asdf', 'response_count': '5', 'subreddit_list': 'canada'}}, 'modify_date': '2023-10-03T10:47:00.052324', 'complete_date': '2023-10-03T14:45:15.399Z'}
+10:47:00,54 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:00,69 urllib3.connectionpool DEBUG http://localhost:6010 "PUT /api/v1/job/f8e142ea-003f-4ee8-9822-c1229ade1649 HTTP/1.1" 200 690
+10:47:00,70 RedditInterface INFO Output directory generated
+10:47:00,72 urllib3.connectionpool DEBUG Starting new HTTPS connection (1): www.reddit.com:443
+10:47:00,706 urllib3.connectionpool DEBUG https://www.reddit.com:443 "POST /api/v1/access_token HTTP/1.1" 200 656
+10:47:00,709 RedditAPISession nickshiell INFO Reddit API Session logger initialized.
+10:47:00,709 RedditInterface INFO RedditAPISession started.
+10:47:00,709 RedditAPISession nickshiell WARNING [WARNING]: HandlejobDict: No ITEM ID specified.
+10:47:00,710 RedditAPISession nickshiell INFO https://oauth.reddit.com/r/canada/new
+10:47:00,711 urllib3.connectionpool DEBUG Starting new HTTPS connection (1): oauth.reddit.com:443
+10:47:00,957 urllib3.connectionpool DEBUG https://oauth.reddit.com:443 "GET /r/canada/new?sort=new&limit=5&t=all&after= HTTP/1.1" 200 4703
+10:47:00,962 root INFO RedditInterface: Data saved.
+10:47:00,962 RedditInterface INFO RedditAPISession Job completed SUCCESSFULLY.
+10:47:00,962 RedditInterface INFO RedditInterface: session ENDED.
+10:47:00,962 genericInterface INFO 
+
+
+
+ UPDATE JOB STATUS 
+
+
+
+ 
+10:47:00,962 root DEBUG Making a put request.
+url: http://localhost:6010/api/v1/job/status/f8e142ea-003f-4ee8-9822-c1229ade1649
+headers: None
+params: None
+data: {'job_status': 'SUCCESS'}
+10:47:00,964 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:00,986 urllib3.connectionpool DEBUG http://localhost:6010 "PUT /api/v1/job/status/f8e142ea-003f-4ee8-9822-c1229ade1649 HTTP/1.1" 200 690
+10:47:00,987 root DEBUG Making a put request.
+url: http://localhost:6010/api/v1/job/f8e142ea-003f-4ee8-9822-c1229ade1649
+headers: None
+params: None
+data: {'complete_date': '2023-10-03T10:47:00.987170', 'modify_date': '2023-10-03T10:47:00.987198'}
+10:47:00,988 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:01,2 urllib3.connectionpool DEBUG http://localhost:6010 "PUT /api/v1/job/f8e142ea-003f-4ee8-9822-c1229ade1649 HTTP/1.1" 200 690
+10:47:01,3 genericInterface INFO 
+
+
+
+
+10:47:05,2 Scheduler INFO Checking for runnable jobs
+10:47:05,3 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'CREATED'}
+10:47:05,5 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:05,13 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=CREATED HTTP/1.1" 200 2
+10:47:05,14 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'PAUSED'}
+10:47:05,17 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:05,23 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=PAUSED HTTP/1.1" 200 2
+10:47:05,24 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'RUNNING'}
+10:47:05,27 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:05,34 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=RUNNING HTTP/1.1" 200 2
+10:47:05,36 Scheduler INFO 0 runnable job(s) found
+10:47:05,36 Scheduler INFO Check for exit conditions
+10:47:05,36 Scheduler INFO Sleep for 5 seconds...
+10:47:10,36 Scheduler INFO Checking for runnable jobs
+10:47:10,37 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'CREATED'}
+10:47:10,38 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:10,45 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=CREATED HTTP/1.1" 200 2
+10:47:10,47 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'PAUSED'}
+10:47:10,49 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:10,59 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=PAUSED HTTP/1.1" 200 2
+10:47:10,61 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'RUNNING'}
+10:47:10,63 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:10,74 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=RUNNING HTTP/1.1" 200 2
+10:47:10,76 Scheduler INFO 0 runnable job(s) found
+10:47:10,76 Scheduler INFO Check for exit conditions
+10:47:10,77 Scheduler INFO Sleep for 5 seconds...
+10:47:15,77 Scheduler INFO Checking for runnable jobs
+10:47:15,77 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'CREATED'}
+10:47:15,79 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:15,85 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=CREATED HTTP/1.1" 200 2
+10:47:15,86 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'PAUSED'}
+10:47:15,88 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:15,94 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=PAUSED HTTP/1.1" 200 2
+10:47:15,95 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'RUNNING'}
+10:47:15,96 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:15,102 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=RUNNING HTTP/1.1" 200 2
+10:47:15,102 Scheduler INFO 0 runnable job(s) found
+10:47:15,102 Scheduler INFO Check for exit conditions
+10:47:15,102 Scheduler INFO Sleep for 5 seconds...
+10:47:20,103 Scheduler INFO Checking for runnable jobs
+10:47:20,103 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'CREATED'}
+10:47:20,105 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:20,111 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=CREATED HTTP/1.1" 200 2
+10:47:20,112 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'PAUSED'}
+10:47:20,115 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:20,120 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=PAUSED HTTP/1.1" 200 2
+10:47:20,121 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'RUNNING'}
+10:47:20,124 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:20,131 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=RUNNING HTTP/1.1" 200 2
+10:47:20,132 Scheduler INFO 0 runnable job(s) found
+10:47:20,132 Scheduler INFO Check for exit conditions
+10:47:20,132 Scheduler INFO Sleep for 5 seconds...
+10:47:25,132 Scheduler INFO Checking for runnable jobs
+10:47:25,133 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'CREATED'}
+10:47:25,134 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:25,141 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=CREATED HTTP/1.1" 200 2
+10:47:25,141 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'PAUSED'}
+10:47:25,143 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:25,148 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=PAUSED HTTP/1.1" 200 2
+10:47:25,148 root DEBUG Making a get request.
+url: http://localhost:6010/api/v1/job
+headers: {'Content-Type': 'application/json'}
+params: {'job_status': 'RUNNING'}
+10:47:25,150 urllib3.connectionpool DEBUG Starting new HTTP connection (1): localhost:6010
+10:47:25,155 urllib3.connectionpool DEBUG http://localhost:6010 "GET /api/v1/job?job_status=RUNNING HTTP/1.1" 200 2
+10:47:25,156 Scheduler INFO 0 runnable job(s) found
+10:47:25,156 Scheduler INFO Check for exit conditions
+10:47:25,156 Scheduler INFO Sleep for 5 seconds...
