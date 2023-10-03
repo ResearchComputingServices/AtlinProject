@@ -15,8 +15,9 @@ sqlfix
 AtlinAPI/AtlinAPI/.DS_Store
 *_test.py
 
-Output/
 atenv
 ../AtlinAPI/.DS_Store
 ../AtlinAPI/AtlinAPI/.DS_Store
 .DS_Store
+
+Output/*
