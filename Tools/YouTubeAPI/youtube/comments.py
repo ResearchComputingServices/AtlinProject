@@ -64,7 +64,7 @@ class Comments(object):
             ex = traceback.format_exc()
             st = log_format("get_comment_replies", ex)
             logger.error(st)
-            self._youtube.state.set_error_description(True, st)
+            #self._youtube.state.set_error_description(True, st)
             list = []
 
         return list
@@ -180,7 +180,6 @@ class Comments(object):
                 ex = traceback.format_exc()
                 st = log_format("create_comment_and_commenter_dict", ex)
                 logger.error(st)
-                self._youtube.state.set_error_description(True, st)
         else:
             records[count] = metadata
 
@@ -246,7 +245,7 @@ class Comments(object):
             ex = traceback.format_exc()
             st = log_format("_get_single_video_comments_and_commenters", ex)
             logger.error(st)
-            self._youtube.state.set_error_description(True, st)
+            #self._youtube.state.set_error_description(True, st)
             fully_retrieved = False
 
         return records, commenters_ids, fully_retrieved
@@ -373,7 +372,7 @@ class Comments(object):
                 ex = traceback.format_exc()
                 st = log_format("_get_comments_count", ex)
                 logger.error(st)
-                self._youtube.state.set_error_description(True, st)
+                #self._youtube.state.set_error_description(True, st)
 
             start = end
 
@@ -414,7 +413,7 @@ class Comments(object):
             ex = traceback.format_exc()
             st = log_format("get_comments_count", ex)
             logger.error(st)
-            self._youtube.state.set_error_description(True, st)
+            #self._youtube.state.set_error_description(True, st)
 
         return
 
@@ -433,7 +432,7 @@ class Comments(object):
             ex = traceback.format_exc()
             st = log_format("clean_comments_count_dict", ex)
             logger.error(st)
-            self._youtube.state.set_error_description(True, st)
+            #self._youtube.state.set_error_description(True, st)
             return None
 
         return new_dict
@@ -534,7 +533,7 @@ class Comments(object):
                 ex = traceback.format_exc()
                 st = log_format("get_comments_count", ex)
                 logger.error(st)
-                self._youtube.state.set_error_description(True, st)
+                #self._youtube.state.set_error_description(True, st)
 
         if start >= len(videos_ids):
             self._youtube.state.remove_action(config.ACTION_RETRIEVE_COMMENTS)
