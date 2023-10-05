@@ -14,7 +14,7 @@ from datetime import datetime
 from datetime import timedelta
 from dateutil import parser
 from zipfile import ZipFile
-import Config as config
+import Config as GralConfig
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 OUTPUT_DIR="OUTPUT_DATA"
@@ -218,6 +218,7 @@ def handle_new_job():
             job_status_completed = handle_state(yt)
             return job_status_completed
 
+
         if not yt.state.under_quota_limit():
             yt.state.quota_exceeded=True
             yt.state.videos_ids.append('NEW')
@@ -292,12 +293,21 @@ def handle_new_job():
         if option == "QUERY":
 
             videos = atlin_yt_job.job.job_detail.job_submit.video_count
-            r = random.randint(0, 1000)
 
+
+            #We have to make sure we have quota to run the whole search
+            search_safety = config.UNITS_SEARCH_LIST * config.MAX_PAGES_SEARCHES
+            if not yt.state.under_quota_limit(search_safety):
+                yt.state.quota_exceeded = True
+                yt.state.videos_ids.append('NEW')
+                job_status_completed = handle_state(yt)
+                return job_status_completed
+
+            #r = random.randint(0, 1000)
             for action in actions:
 
-
-                filename = atlin_yt_job.job.job_uid + "_" + action + '_' + str(r) + '---'
+                #filename = atlin_yt_job.job.job_uid + "_" + action + '_' + str(r) + '---'
+                filename = atlin_yt_job.job.job_uid + "_" + action
                 filename = utils.get_filename(filename, extension)
 
                 if action == "METADATA":
@@ -507,7 +517,7 @@ def YouTubeInterface(job):
         print ("Starting job...")
 
         global atlin_yt_job
-        atlin_yt_job= AtlinYouTubeJob(config.ATLIN_API_ADDRESS)
+        atlin_yt_job= AtlinYouTubeJob(GralConfig.ATLIN_API_ADDRESS)
         global job_status
         job_status = atlinAPI.JobStatus()
 
@@ -531,6 +541,7 @@ def YouTubeInterface(job):
             job_status_completed = handle_new_job()
         elif atlin_yt_job.job.job_status == "PAUSED":
             print("Paused job...")
+            atlin_yt_job.job.job_status = "RUNNING"
             job_status_completed = handle_paused_jobs()
 
         print('Job status...')
