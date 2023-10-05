@@ -1,4 +1,5 @@
 import logging
+from logging.handlers import RotatingFileHandler
 import concurrent.futures
 import time
 from itertools import repeat
@@ -215,12 +216,22 @@ class JobScheduler:
 ##############################################################################################################
 
 if __name__ == '__main__':
-    
-    logging.basicConfig(filename='./atlinLog.log',
-                        filemode='a',
-                        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                        datefmt='%H:%M:%S',
-                        level=logging.DEBUG)
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s %(levelname)s %(filename)s %(funcName)s(%(lineno)d) %(message)s',
+        handlers=[
+            RotatingFileHandler(
+                f"log_data_fetcher_{time.strftime('%y%m%d_%H%M')}.log",
+                mode='a',
+                maxBytes=5*1024*1024,
+                backupCount=2,
+                encoding=None,
+                delay=0,
+            ),
+            # logging.FileHandler(f"log_data_fetcher_{time.strftime('%y%m%d_%H%M')}.log"),
+            logging.StreamHandler(),
+        ])
+
          
     js = JobScheduler(waitTime=WAIT_TIME)
     
