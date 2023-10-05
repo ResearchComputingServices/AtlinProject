@@ -41,7 +41,6 @@ class JobScheduler:
 
         self.jobHandleDict = {}
 
-        logging.basicConfig(level=logging.INFO)
         self.logger_ = logging.getLogger('Scheduler')
                     
     #########################################################################
@@ -216,7 +215,13 @@ class JobScheduler:
 ##############################################################################################################
 
 if __name__ == '__main__':
-        
+    
+    logging.basicConfig(filename='./atlinLog.log',
+                        filemode='a',
+                        format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                        datefmt='%H:%M:%S',
+                        level=logging.DEBUG)
+         
     js = JobScheduler(waitTime=WAIT_TIME)
     
     js.AddJobType('REDDIT', RedditInterface)

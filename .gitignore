@@ -5,6 +5,7 @@ Scheduler/DataBaseUtils.py
 Scheduler/MakeTestDataBase.py
 Scheduler/testDataBase.db
 Scheduler/OUTPUT_DATA/
+Scheduler/atlinLog.log
 Docs/rcs-sm-db-backup.sql
 
 *.db

@@ -12,6 +12,8 @@ import Tools.YouTubeAPI.youtube.config as config
 import sys
 import traceback
 
+import logging
+
 class Youtube:
     def __init__(self, api_key, current_quota=None) -> None:
         logger.debug("Initializing YouTube object.")
