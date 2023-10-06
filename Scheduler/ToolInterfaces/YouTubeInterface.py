@@ -168,16 +168,16 @@ def change_job_status(new_job_status):
 def handle_state(yt):
     logger.debug("Handle state")
     #SUCCESS
-    if yt.state.error:
-        job_status_completed = job_status.failed
-        change_job_status(job_status.failed)
-        save_job_message(msg=yt.state.error_description)
+    if yt.state.quota_exceeded:
+        job_status_completed = job_status.paused
+        change_job_status(job_status.paused)
+        save_job_state(yt.state)
+        save_job_message(msg="There isn't enough quota to complete this request.")
     else:
-        if yt.state.quota_exceeded:
-            job_status_completed = job_status.paused
-            change_job_status(job_status.paused)
-            save_job_state(yt.state)
-            save_job_message(msg="There isn't enough quota to complete this request.")
+        if yt.state.error:
+            job_status_completed = job_status.failed
+            change_job_status(job_status.failed)
+            save_job_message(msg=yt.state.error_description)
         else:
             if len(yt.state.actions)==0:
                 save_job_message(msg="Completed Job")
