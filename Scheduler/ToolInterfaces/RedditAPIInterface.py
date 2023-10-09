@@ -20,7 +20,7 @@ def UpdateQuota(jobJSON, quotaUsed) -> None:
 
     token_uid = jobJSON['token_uid']
     
-    token = atlin.token_get(token_uid=token_uid )
+    atlin.token_set_quota(token_uid, 'REDDIT', quotaUsed)
 
     return
 
@@ -294,9 +294,9 @@ def RedditInterface(jobJSON):
         else:
             logging.info('RedditInterface: Unable to save data.')
 
-        # TODO: Update the quota
-        #quotaUsed = session.GetNumberOfRequests()
-        #UpdateQuota(jobJSON, quotaUsed)
+        # update quota used
+        quotaUsed = session.GetNumberOfRequests()
+        UpdateQuota(jobJSON, quotaUsed)
 
         # update the returned job status
         jobStatus = JobStatus().success
