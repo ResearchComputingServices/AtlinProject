@@ -22,3 +22,4 @@ atenv
 .DS_Store
 
 Output/*
+Logs/*

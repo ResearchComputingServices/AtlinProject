@@ -1,17 +1,18 @@
+from pathlib import Path
+import sys
+
+BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
+sys.path.insert(0, BASE_DIR)
+
 import logging
 from logging.handlers import RotatingFileHandler
 import concurrent.futures
 import time
 from itertools import repeat
-from pathlib import Path
 from typing import Callable, List
-import sys
 import signal
+import Config as config
 
-BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
-sys.path.insert(0, BASE_DIR)
-
-#from AtlinAPI.AtlinAPI.atlin import *
 from atlin_api.atlin_api import *
 
 from Scheduler.Utils import  *
@@ -267,13 +268,16 @@ class JobScheduler:
 ##############################################################################################################
 
 if __name__ == '__main__':
-       
+    
+    # Initialize logging
+    log_file_path = os.path.join(config.LOGGER_DIR_PATH,'log_data_fetcher_')
+    
     logging.basicConfig(
         level=logging.DEBUG,
         format='%(asctime)s %(levelname)s %(filename)s %(funcName)s(%(lineno)d) %(message)s',
         handlers=[
             RotatingFileHandler(
-                f"log_data_fetcher_{time.strftime('%y%m%d_%H%M')}.log",
+                f"{log_file_path}{time.strftime('%y%m%d_%H%M')}.log",
                 mode='a',
                 maxBytes=5*1024*1024,
                 backupCount=2,
