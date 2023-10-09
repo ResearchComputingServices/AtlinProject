@@ -6,6 +6,7 @@ from itertools import repeat
 from pathlib import Path
 from typing import Callable, List
 import sys
+import signal
 
 BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
 sys.path.insert(0, BASE_DIR)
@@ -43,6 +44,8 @@ class JobScheduler:
         self.jobHandleDict = {}
 
         self.logger_ = logging.getLogger('Scheduler')
+        
+        signal.signal(signal.SIGINT, self._handlerSIGINT)
                     
     #########################################################################
     # PRIVATE FUNCTIONS
@@ -51,6 +54,7 @@ class JobScheduler:
     ############################################################################################
     # This function will take in a list of dictionarys which describe a job and creates seperate
     # threads to run them
+    ############################################################################################
     def _submitJobs(self, 
                     listOfJobJSON : List[any]):
         
@@ -77,9 +81,20 @@ class JobScheduler:
             executor.shutdown(wait=False)
 
         return
+    
+    ############################################################################################
+    # Handle receiving SIGINT signal
+    ############################################################################################
+    def _handlerSIGINT(self,sig, frame):
+        self.logger_.info('Handling SIGINT')
+        
+        self._clearRunningJobs()
+        
+        sys.exit(0)
 
     ############################################################################################
-    # Handle API request for job with status == CREATED
+    # Handle API request for jobs with status = jobStatus
+    ############################################################################################
     def _getJobs(self,
                  jobStatus: JobStatus):
         response = None
@@ -89,12 +104,26 @@ class JobScheduler:
             response = self.atlin_.job_get(job_status=[jobStatus])
         except Exception as e:
             self.logger_.error(e)  
-            print(f'ERROR: _getJobs: {e}')    
 
         return response
 
+    ####################################################################################################
+    # Sets status of job with id 'job_uid' to 'status
+    ############################################################################################
+    def _setJobStatus(  self,
+                        job_uid, 
+                        job_status) -> None:
+        
+        try:        
+            self.atlin_.job_set_status(job_uid, job_status)
+        except Exception as e:
+            self.logger_.error(e)  
+        
+        return 
+
     ############################################################################################
     # Helper function that returns a list of currently used token_uids
+    ############################################################################################
     def _getCurrentlyUsedTokenIDs(self) -> list:
         
         usedTokenIDs = []
@@ -112,6 +141,7 @@ class JobScheduler:
 
     ############################################################################################
     # Merges the created and paused jobs and returns a list sort by age (oldest to youngest) 
+    ############################################################################################
     def _getPotentiallyRunnableJobs(self) -> list:
         potentiallyRunnableJobs = []
         
@@ -127,12 +157,27 @@ class JobScheduler:
             self.logger_.error(f'_getCurrentlyUsedTokenIDs: {e}')
                     
         return potentiallyRunnableJobs
+    
+    ############################################################################################
+    # Clears out all running jobs from the database and sets there status to FAILED. This is
+    # function is executed before the scheduler starts it's main loop.
+    ############################################################################################
+    def _clearRunningJobs(self):
+                        
+        try:
+            runningJobsList = self._getJobs(JobStatus().running).json()
         
-
+            for job in runningJobsList:
+                self._setJobStatus(job['job_uid'], JobStatus().failed)     
+        
+        except Exception as e:
+            self.logger_.error(e)
+        
     ############################################################################################
     # This function compares rows in the jobs table with the status CREATED with those that are 
     # currently status RUNNING. If the token_uid of a CREATED job is not currenly used by a 
     # RUNNING job it is added to the returned list.
+    ############################################################################################
     def _checkDataBaseForRunnableJobs(self) -> list:
         
         runnableJobs = []
@@ -158,6 +203,7 @@ class JobScheduler:
     ############################################################################################
     # This function checks the data base for any rows in the JobsTable which has a job
     # status set to CREATED
+    ############################################################################################
     def _checkDataBaseForJobsToSubmit(self) -> None:
         
         try:
@@ -172,6 +218,7 @@ class JobScheduler:
                                    
     ############################################################################################
     # This function checks for any sort of exit conditions
+    ############################################################################################
     def _checkExit(self):
         self.logger_.info('Check for exit conditions')
         
@@ -183,6 +230,7 @@ class JobScheduler:
     
     ############################################################################################
     # Add a new job type, and the ToolInterface to run it
+    ############################################################################################
     def AddJobType( self,
                     jobType : str,
                     toolFunctionPoint : Callable) -> None:
@@ -193,10 +241,14 @@ class JobScheduler:
         else:
             self.logger_.error('AddJobType: argument \'toolFunctionPoint\' not a callable type')
             raise TypeError
-                
+               
     ############################################################################################
     # This is the main loop for the job scheduler
+    ############################################################################################
     def Run(self):
+                
+        # Clear out jobs in DB which are stuck on 'running'
+        self._clearRunningJobs()
                 
         while self.keepRunning_:
             
@@ -209,13 +261,13 @@ class JobScheduler:
 
             # don't spam the API
             self.logger_.info(f'Sleep for {self.waitTime_} seconds...')
-            time.sleep(self.waitTime_)
-            
+            time.sleep(self.waitTime_)           
 
 
 ##############################################################################################################
 
 if __name__ == '__main__':
+       
     logging.basicConfig(
         level=logging.DEBUG,
         format='%(asctime)s %(levelname)s %(filename)s %(funcName)s(%(lineno)d) %(message)s',
@@ -228,11 +280,10 @@ if __name__ == '__main__':
                 encoding=None,
                 delay=0,
             ),
-            # logging.FileHandler(f"log_data_fetcher_{time.strftime('%y%m%d_%H%M')}.log"),
+            #logging.FileHandler(f"log_data_fetcher_{time.strftime('%y%m%d_%H%M')}.log"),
             logging.StreamHandler(),
         ])
-
-         
+       
     js = JobScheduler(waitTime=WAIT_TIME)
     
     js.AddJobType('REDDIT', RedditInterface)
