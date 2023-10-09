@@ -97,13 +97,15 @@ REDDUT_AUTHEN_KEY = 'Authorization'
 
 REDDIT_JOB_DETAIL_SORT_BY ='sortBy' 
 REDDIT_JOB_DETAIL_TIME_FRAME = 'timeFrame' 
-REDDIT_JOB_DETAIL_N = 'n', 
+REDDIT_JOB_DETAIL_N = 'n'
 REDDIT_JOB_DETAIL_SUBREDDIT = 'subreddit'
-REDDIT_JOB_DETAIL_USER = 'user', 
-REDDIT_JOB_DETAIL_POST = 'post', 
-REDDIT_JOB_DETAIL_KEYWORD = 'keyword', 
-REDDIT_JOB_DETAIL_GETPOSTS = 'getposts', 
+REDDIT_JOB_DETAIL_USER = 'user'
+REDDIT_JOB_DETAIL_POST = 'post'
+REDDIT_JOB_DETAIL_KEYWORD = 'keyword'
+REDDIT_JOB_DETAIL_GETPOSTS = 'getposts'
 REDDIT_JOB_DETAIL_COMMENTS = 'getcomments'
+    
+RESPONSE_BREAK = '================================================================================='
     
 ####################################################################################################
 # This function removed the 'type' code at the front of a reddit ID36

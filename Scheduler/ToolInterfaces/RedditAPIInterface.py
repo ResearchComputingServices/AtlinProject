@@ -107,24 +107,153 @@ def getCredentialsDict(jobJSON) -> dict:
 ####################################################################################################
 #
 ####################################################################################################
-def getJobDict(jobJSON) -> dict:
-    
-    jobDictDB = jobJSON['job_detail']['job_submit']
-    
-    # TODO: Figure out why some keys are not working out (ie ones in quotes)    
-    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : jobDictDB['sort_option'].lower(),
+def initializeJobDict() -> dict:
+    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : 'new',
                 REDDIT_JOB_DETAIL_TIME_FRAME : 'all',  
-                'n' : int(jobDictDB['response_count']), 
+                REDDIT_JOB_DETAIL_N : 5, 
+                REDDIT_JOB_DETAIL_SUBREDDIT: 'canada',
+                REDDIT_JOB_DETAIL_USER: '',
+                REDDIT_JOB_DETAIL_POST: ['', ''],
+                REDDIT_JOB_DETAIL_KEYWORD: '',
+                REDDIT_JOB_DETAIL_GETPOSTS: 1,
+                REDDIT_JOB_DETAIL_COMMENTS: 0}
+
+    return jobDict
+
+####################################################################################################
+#
+####################################################################################################
+def decodeSortOption(sort_option: str) -> str:
+    sort_string = ''
+    
+    if sort_option == 'TOP_TODAY.':
+        sort_string = 'top/?t=day'
+    elif sort_option == 'TOP_WEEK.':
+        sort_string = 'top/?t=week'
+    elif sort_option == 'TOP_MONTH.':
+        sort_string = 'top/?t=month'
+    elif sort_option == 'TOP_YEAR.':
+        sort_string = 'top/?t=year'
+    elif sort_option == 'TOP_ALL.':
+        sort_string = 'top/?t=all'
+    elif sort_option == 'BEST.':
+        sort_string = 'hot'
+    else:
+        sort_string = 'new'
+    
+    return sort_string
+
+####################################################################################################
+#
+# 'job_detail': {
+#       'job_submit': {
+#           'post_list': '', 
+#           'option_type': 'SUBREDDIT', 
+#           'sort_option': 'TOP_TODAY', 
+#           'scrape_option': 'BASIC', 
+#           'username_list': '', 
+#           'response_count': '5', 
+#           'subreddit_list': 'canada', 
+#           'subreddit_name': '', 
+#           'scrape_comments': 'false'}},
+#################################################################################################### 
+def getSubredditJobDict(jobDictDB):
+    
+    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : decodeSortOption(jobDictDB['sort_option']),
+                REDDIT_JOB_DETAIL_TIME_FRAME : 'all',  
+                REDDIT_JOB_DETAIL_N : int(jobDictDB['response_count']), 
                 REDDIT_JOB_DETAIL_SUBREDDIT: jobDictDB['subreddit_list'],
-                'user': '',
-                'post': ['', ''],
-                'keyword': jobDictDB['keyword_list'],
-                'getposts': 0,
+                REDDIT_JOB_DETAIL_USER: '',
+                REDDIT_JOB_DETAIL_POST: ['', ''],
+                REDDIT_JOB_DETAIL_KEYWORD: jobDictDB['keyword_list'],
+                REDDIT_JOB_DETAIL_GETPOSTS: 1,
                 REDDIT_JOB_DETAIL_COMMENTS: 0}
     
-    if jobDictDB['option_type'] == "POST":
-        jobDict['getposts'] = 1
+    return jobDict
 
+####################################################################################################
+#
+# 'job_detail': {
+#         'job_submit': {
+#             'post_list': '173bygx\n    ', 
+#             'option_type': 'POST', 
+#             'sort_option': 'BEST', 
+#             'keyword_list': '', 
+#             'scrape_option': '', 
+#             'username_list': '', 
+#             'response_count': '', 
+#             'subreddit_list': '', 
+#             'subreddit_name': 'canada', 
+#             'scrape_comments': ''}
+#             }, 
+####################################################################################################
+def getPostJobDict(jobDictDB):
+    
+    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : decodeSortOption(jobDictDB['sort_option']),
+                REDDIT_JOB_DETAIL_TIME_FRAME : 'all',  
+                REDDIT_JOB_DETAIL_N : int(jobDictDB['response_count']), 
+                REDDIT_JOB_DETAIL_SUBREDDIT: '',
+                REDDIT_JOB_DETAIL_USER: '',
+                REDDIT_JOB_DETAIL_POST: [jobDictDB['subreddit_list'], jobDictDB['post_list']],
+                REDDIT_JOB_DETAIL_KEYWORD: '',
+                REDDIT_JOB_DETAIL_GETPOSTS: 1,
+                REDDIT_JOB_DETAIL_COMMENTS: 0}
+    
+    return jobDict
+
+####################################################################################################
+#
+# 'job_detail': {
+#       'job_submit': {
+#           'post_list': '', 
+#           'option_type': 'USER', 
+#           'sort_option': 'BEST', 
+#           'keyword_list': '', 
+#           'scrape_option': '', 
+#           'username_list': 'DonSalaam', 
+#           'response_count': '5', 
+#           'subreddit_list': '', 
+#           'subreddit_name': '', 
+#           'scrape_comments': 'false'}}
+####################################################################################################
+def getUserJobDict(jobDictDB):
+    
+    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : decodeSortOption(jobDictDB['sort_option']),
+                REDDIT_JOB_DETAIL_TIME_FRAME : 'all',  
+                REDDIT_JOB_DETAIL_N : int(jobDictDB['response_count']), 
+                REDDIT_JOB_DETAIL_SUBREDDIT: '',
+                REDDIT_JOB_DETAIL_USER: jobDictDB['username_list'],
+                REDDIT_JOB_DETAIL_POST: ['', ''],
+                REDDIT_JOB_DETAIL_KEYWORD: '',
+                REDDIT_JOB_DETAIL_GETPOSTS: 1,
+                REDDIT_JOB_DETAIL_COMMENTS: 0}
+
+    return jobDict
+
+####################################################################################################
+#
+####################################################################################################
+
+def getJobDict(jobJSON) -> dict:
+    
+    logger = logging.getLogger('RedditInterface')
+    try:
+        jobDict = initializeJobDict()
+            
+        jobDictDB = jobJSON['job_detail']['job_submit']
+        job_type = jobDictDB['option_type']
+        
+        if job_type == 'SUBREDDIT':
+            jobDict = getSubredditJobDict(jobDictDB) 
+        elif job_type == 'POST':
+            jobDict = getPostJobDict(jobDictDB) 
+        elif job_type == 'USER':
+            jobDict = getUserJobDict(jobDictDB) 
+        else:
+            logger.info(f'Unknown option_type: {job_type}')
+    except Exception as e:
+        logger.info(e)
+        
     return jobDict
 
 ####################################################################################################
@@ -138,9 +267,11 @@ def RedditInterface(jobJSON):
     logger.info(f'Preforming Reddit job: {job_uid}')
     
     # the credientals  and job details from the JOB_JSON object    
+    logger.info('Constructing jobDict')
     jobDict = getJobDict(jobJSON)
     logger.info('RedditInterface jobDict:', jobDict)
     
+    logger.info('Waiting for credentials')
     credentialsDict = getCredentialsDict(jobJSON)
     logger.info('credentialsDict RECIEVED')
     

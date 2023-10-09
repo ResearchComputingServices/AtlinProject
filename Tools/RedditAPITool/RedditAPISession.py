@@ -234,7 +234,9 @@ class RedditAPISession:
     ####################################################################################################
     # This function handles 'subreddit' type jobs
     def handleSubRedditJob(self, jobDict) -> bool:
-
+        
+        self.logger_.info('handleSubRedditJob')  
+        
         successFlag = None
               
         if jobDict['getposts'] == 1: 
@@ -242,7 +244,7 @@ class RedditAPISession:
         elif len(jobDict['keyword']) > 0:
             successFlag = self.getSubredditKeywordSearch(jobDict)
         else:
-            self.logger_.warning('[WARNING]: HandlejobDict: No ACTION specified for subreddit',flush=True)  
+            self.logger_.warning('No ACTION specified for subreddit')  
             successFlag = False
             
         return successFlag
@@ -258,7 +260,7 @@ class RedditAPISession:
         elif jobDict['getcomments'] == 1:
             successFlag = self.getUserComments(jobDict)
         else:
-            self.logger_.warning('[WARNING]: HandlejobDict: No ACTION specified for user',flush=True)
+            self.logger_.warning('No ACTION specified for user')
             successFlag = False
         
         return successFlag
@@ -278,22 +280,20 @@ class RedditAPISession:
     ####################################################################################################
     # This function performs the API call which is described in the jobDict dictionary.
     def HandleJobDict(self, jobDict) -> None:      
-        
-                
+                    
         successFlag = False
         
         self.extractParams(jobDict)
                 
         # This block of code calls the API command which is described in the jobDict          
-        if jobDict['subreddit'] != None:
-            self.logger_.warning('[WARNING]: HandlejobDict: No ITEM ID specified.') 
+        if jobDict['subreddit'] != '':
             successFlag = self.handleSubRedditJob(jobDict)        
-        elif jobDict['user'] != None:
+        elif jobDict['user'] != '':
             successFlag = self.handleUserJob(jobDict)       
-        elif  jobDict['post'] != None:
+        elif jobDict['post'][0] !=  '' and jobDict['post'][1] != '':
             successFlag = self.handlePostJob(jobDict)
         else:
-            self.logger_.warning('[WARNING]: HandlejobDict: No ITEM ID specified.')  
+            self.logger_.warning('No ITEM ID specified.')  
         
         return successFlag
     
@@ -316,8 +316,16 @@ class RedditAPISession:
             listOrResponses = self.GetResponses()
             for responseJSON in listOrResponses:
                 
-                file.write(str(responseJSON['data']))
-            
+                dict = responseJSON['data']
+                  
+                for key in dict.keys():
+                    
+                    if key not in POST_KEYS_OF_INTEREST:
+                        continue        
+                        
+                    file.write(str(key)+' : ' + str(dict[key]) + '\n')
+                
+                file.write(RESPONSE_BREAK)
             file.close()     
             
             successFlag = True   

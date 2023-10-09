@@ -273,7 +273,7 @@ if __name__ == '__main__':
     log_file_path = os.path.join(config.LOGGER_DIR_PATH,'log_data_fetcher_')
     
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format='%(asctime)s %(levelname)s %(filename)s %(funcName)s(%(lineno)d) %(message)s',
         handlers=[
             RotatingFileHandler(
