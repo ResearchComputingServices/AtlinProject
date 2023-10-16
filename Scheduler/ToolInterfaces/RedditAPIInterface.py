@@ -124,24 +124,35 @@ def initializeJobDict() -> dict:
 #
 ####################################################################################################
 def decodeSortOption(sort_option: str) -> str:
-    sort_string = ''
-    
-    if sort_option == 'TOP_TODAY.':
-        sort_string = 'top/?t=day'
-    elif sort_option == 'TOP_WEEK.':
-        sort_string = 'top/?t=week'
-    elif sort_option == 'TOP_MONTH.':
-        sort_string = 'top/?t=month'
-    elif sort_option == 'TOP_YEAR.':
-        sort_string = 'top/?t=year'
-    elif sort_option == 'TOP_ALL.':
-        sort_string = 'top/?t=all'
-    elif sort_option == 'BEST.':
-        sort_string = 'hot'
+    sort_by_str = ''
+    time_frame_str = ''
+        
+    if sort_option == 'TOP_TODAY':
+        sort_by_str = 'top'
+        time_frame_str = 'day'
+    elif sort_option == 'TOP_WEEK':
+        sort_by_str = 'top'
+        time_frame_str = 'week'
+    elif sort_option == 'TOP_MONTH':
+        sort_by_str = 'top'
+        time_frame_str = 'month'
+    elif sort_option == 'TOP_YEAR':
+        sort_by_str = 'top'
+        time_frame_str = 'year'
+    elif sort_option == 'TOP_ALL':
+        sort_by_str = 'top'
+        time_frame_str = 'all'
+    elif sort_option == 'BEST':
+        sort_by_str = 'hot'
+        time_frame_str = ''
+    elif sort_option == 'KEYWORD':
+        sort_by_str = ''
+        time_frame_str = ''
     else:
-        sort_string = 'new'
+        sort_by_str = 'new'
+        time_frame_str = ''
     
-    return sort_string
+    return sort_by_str, time_frame_str
 
 ####################################################################################################
 #
@@ -159,14 +170,22 @@ def decodeSortOption(sort_option: str) -> str:
 #################################################################################################### 
 def getSubredditJobDict(jobDictDB):
     
-    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : decodeSortOption(jobDictDB['sort_option']),
-                REDDIT_JOB_DETAIL_TIME_FRAME : 'all',  
+    sort_by, time_frame =decodeSortOption(jobDictDB['sort_option'])
+    
+    keywords = ''
+    getposts = 1
+    if 'keyword_list' in jobDictDB.keys():
+        keywords = jobDictDB['keyword_list']
+        getposts = 0
+        
+    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : sort_by,
+                REDDIT_JOB_DETAIL_TIME_FRAME : time_frame,  
                 REDDIT_JOB_DETAIL_N : int(jobDictDB['response_count']), 
                 REDDIT_JOB_DETAIL_SUBREDDIT: jobDictDB['subreddit_list'],
                 REDDIT_JOB_DETAIL_USER: '',
                 REDDIT_JOB_DETAIL_POST: ['', ''],
-                REDDIT_JOB_DETAIL_KEYWORD: jobDictDB['keyword_list'],
-                REDDIT_JOB_DETAIL_GETPOSTS: 1,
+                REDDIT_JOB_DETAIL_KEYWORD: keywords,
+                REDDIT_JOB_DETAIL_GETPOSTS: getposts,
                 REDDIT_JOB_DETAIL_COMMENTS: 0}
     
     return jobDict
@@ -189,12 +208,14 @@ def getSubredditJobDict(jobDictDB):
 ####################################################################################################
 def getPostJobDict(jobDictDB):
     
-    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : decodeSortOption(jobDictDB['sort_option']),
-                REDDIT_JOB_DETAIL_TIME_FRAME : 'all',  
-                REDDIT_JOB_DETAIL_N : int(jobDictDB['response_count']), 
+    sort_by, time_frame =decodeSortOption(jobDictDB['sort_option'])
+    
+    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : sort_by,
+                REDDIT_JOB_DETAIL_TIME_FRAME : time_frame,  
+                REDDIT_JOB_DETAIL_N : 0,  # this type of request does not need an N value
                 REDDIT_JOB_DETAIL_SUBREDDIT: '',
                 REDDIT_JOB_DETAIL_USER: '',
-                REDDIT_JOB_DETAIL_POST: [jobDictDB['subreddit_list'], jobDictDB['post_list']],
+                REDDIT_JOB_DETAIL_POST: [jobDictDB['subreddit_name'], jobDictDB['post_list']],
                 REDDIT_JOB_DETAIL_KEYWORD: '',
                 REDDIT_JOB_DETAIL_GETPOSTS: 1,
                 REDDIT_JOB_DETAIL_COMMENTS: 0}
@@ -218,8 +239,10 @@ def getPostJobDict(jobDictDB):
 ####################################################################################################
 def getUserJobDict(jobDictDB):
     
-    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : decodeSortOption(jobDictDB['sort_option']),
-                REDDIT_JOB_DETAIL_TIME_FRAME : 'all',  
+    sort_by, time_frame =decodeSortOption(jobDictDB['sort_option'])
+    
+    jobDict = { REDDIT_JOB_DETAIL_SORT_BY : sort_by,
+                REDDIT_JOB_DETAIL_TIME_FRAME : time_frame,  
                 REDDIT_JOB_DETAIL_N : int(jobDictDB['response_count']), 
                 REDDIT_JOB_DETAIL_SUBREDDIT: '',
                 REDDIT_JOB_DETAIL_USER: jobDictDB['username_list'],
@@ -251,8 +274,10 @@ def getJobDict(jobJSON) -> dict:
             jobDict = getUserJobDict(jobDictDB) 
         else:
             logger.info(f'Unknown option_type: {job_type}')
+    
     except Exception as e:
         logger.info(e)
+        jobDict = None
         
     return jobDict
 
@@ -261,54 +286,56 @@ def getJobDict(jobJSON) -> dict:
 ####################################################################################################
 def RedditInterface(jobJSON):
    
+    # the return value
+    jobStatus =  JobStatus().failed
+   
+    # initialize logger
     logger = logging.getLogger('RedditInterface')
      
     job_uid = jobJSON['job_uid']
     logger.info(f'Preforming Reddit job: {job_uid}')
+    logger.info(jobJSON)
     
     # the credientals  and job details from the JOB_JSON object    
     logger.info('Constructing jobDict')
     jobDict = getJobDict(jobJSON)
-    logger.info('RedditInterface jobDict:', jobDict)
+    if jobDict != None:
+        logger.info('RedditInterface jobDict:', jobDict)
     
-    logger.info('Waiting for credentials')
-    credentialsDict = getCredentialsDict(jobJSON)
-    logger.info('credentialsDict RECIEVED')
+        logger.info('Waiting for credentials')
+        credentialsDict = getCredentialsDict(jobJSON)
+        logger.info('credentialsDict RECIEVED')
     
-    # create an output directory to store the collected data in
-    GenerateOutputDirectory(jobJSON)
-    logger.info('Output directory generated')
-    
-    # connect to reddit API
-    session = RedditAPISession(credentialsDict) 
-    logger.info('RedditAPISession started.')
-    
-    # the return value
-    jobStatus = None
-    
-    # execute the job as defined by the jobDict
-    if session.HandleJobDict(jobDict):
-                
-        if session.SaveResponses(jobJSON):
-            logging.info('RedditInterface: Data saved.')
-        else:
-            logging.info('RedditInterface: Unable to save data.')
-
-        # update quota used
-        quotaUsed = session.GetNumberOfRequests()
-        UpdateQuota(jobJSON, quotaUsed)
-
-        # update the returned job status
-        jobStatus = JobStatus().success
+        # create an output directory to store the collected data in
+        GenerateOutputDirectory(jobJSON)
+        logger.info('Output directory generated')
         
-        logger.info('RedditAPISession Job completed SUCCESSFULLY.')
-    else:
-        jobStatus = JobStatus().failed
-        logger.info('RedditInterface Job completed FAILED.')
-    
-    # disconnect from the reddit API
-    session.End()
-    logger.info('RedditInterface: session ENDED.')
+        # connect to reddit API
+        session = RedditAPISession(credentialsDict) 
+        logger.info('RedditAPISession started.')
+            
+        # execute the job as defined by the jobDict
+        if session.HandleJobDict(jobDict):
+                    
+            if session.SaveResponses(jobJSON):
+                logging.info('RedditInterface: Data saved.')
+            else:
+                logging.info('RedditInterface: Unable to save data.')
+
+            # update quota used
+            quotaUsed = session.GetNumberOfRequests()
+            UpdateQuota(jobJSON, quotaUsed)
+
+            # update the returned job status
+            jobStatus = JobStatus().success
+            
+            logger.info('RedditAPISession Job completed SUCCESSFULLY.')
+        else:
+            logger.info('RedditInterface Job completed FAILED.')
+        
+        # disconnect from the reddit API
+        session.End()
+        logger.info('RedditInterface: session ENDED.')
 
     return  jobStatus
  
