@@ -49,6 +49,7 @@ class Channels:
             ex = traceback.format_exc()
             st = log_format("get_videos_metadata", ex)
             logger.error(st)
+            st = "Error on getting channel's metadata."
             self._youtube.state.set_error_description(True, st)
 
         self.channel_records = channel_records
@@ -77,6 +78,7 @@ class Channels:
             ex = traceback.format_exc()
             st = log_format("create_channel_dict", ex)
             logger.error(st)
+            st = "Error on creating a channels dictionary.ff"
             self._youtube.state.set_error_description(True, st)
 
         return record

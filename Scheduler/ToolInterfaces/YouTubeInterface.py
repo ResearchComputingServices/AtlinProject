@@ -325,6 +325,7 @@ def handle_new_job():
         ex = traceback.format_exc()
         st = utils.log_format("handle_new_job", ex)
         logger.error(st)
+        st = "An exception occurred when executing the job."
         yt.state.set_error_description(True, st)
 
     job_status_completed = handle_state(yt)
@@ -379,8 +380,9 @@ def resume_job():
                 utils.save_file(response, atlin_yt_job.job.output_path, filename)
     except:
         ex = traceback.format_exc()
-        st = utils.log_format("handle_new_job", ex)
+        st = utils.log_format("resume_job", ex)
         logger.error(st)
+        st = "An exception occurred when resuming a job."
         yt.state.set_error_description(True, st)
 
     job_status_completed = handle_state(yt)

@@ -58,7 +58,7 @@ class Videos:
             ex = traceback.format_exc()
             st = log_format("get_videos_metadata", ex)
             logger.error(st)
-            self._youtube.state.set_error_description(True, st)
+            self._youtube.state.set_error_description(True, "An error occurred getting the videos' metadata.")
 
         return videos_response
 
@@ -105,7 +105,8 @@ class Videos:
                         #Probably a invalid input (id, url etc)
                         if self._youtube.state.api_key_valid:
                             st = log_format("get_videos_and_videocreators", "Response from YouTube server was empty. Check input request (e.g., IDs, url, etc)")
-                            logger.warning(st)
+                            logger.error(st)
+                            st = "Response from YouTube server was empty. Check input request (e.g., IDs, url, etc)"
                             self._youtube.state.set_error_description(True, st)
                         break
 
@@ -131,6 +132,7 @@ class Videos:
             ex = traceback.format_exc()
             st = log_format("get_videos_and_videocreators",ex)
             logger.error(st)
+            st = "An error occurred getting videos and videos'creators."
             self._youtube.state.set_error_description(True,st)
 
 
@@ -203,6 +205,7 @@ class Videos:
             ex = traceback.format_exc()
             st = log_format("create_video_and_creator_dict", ex)
             logger.error(st)
+            st = "Error on creating videos and creators dictionary."
             self._youtube.state.set_error_description(True, st)
 
             metadata = {
