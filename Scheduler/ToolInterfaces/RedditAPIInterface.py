@@ -65,20 +65,22 @@ def GenerateOutputDirectory(jobJSON) -> str:
 ####################################################################################################
 def getCredentialsDictFromDB(jobJSON) -> dict:
 
+    # Make the get request to the API
     atlin = Atlin(config.ATLIN_API_ADDRESS)
-
-    tokenReturn = {}
+    response = ''
     try :          
         response = atlin.token_get( user_uid=jobJSON['user_uid'],
                                     social_platform=jobJSON['social_platform'],
                                     token_uid=jobJSON['token_uid'])
-        
-        if response.status_code == 200:
-            tokenReturn = response.json()['token_detail']
-        else:
-            logging.warning('RedditAPIInderface::getCredentialsDictFromDB: failed error code:', response.status_code)
     except Exception as e:
-        logging.error('getCredentialsDictFromDB:', e)
+        logging.error(e)
+
+    # extract the token_details from the response if successful
+    tokenReturn = {}
+    if response.status_code == 200:  
+        tokenReturn = response.json()['token_detail']
+    else:
+        logging.warning('API get request failed with error code:', response.status_code)
 
     return tokenReturn
 

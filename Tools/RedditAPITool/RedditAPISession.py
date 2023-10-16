@@ -34,6 +34,12 @@ class RedditAPISession:
     
     def __init__(   self,
                     credientalsDict = {}):
+        
+        # initialize logger
+        username = credientalsDict['username']
+        self.logger_ = logging.getLogger(f'RedditAPISession {username}' )  
+        self.logger_.info('Reddit API Session logger initialized.')
+             
         # Initialize members
         
         self.credientalsDict_ = credientalsDict
@@ -46,20 +52,22 @@ class RedditAPISession:
     
         self.numRequest_ = 0
         
-        self.generateAuthentifiedHeader()
-        
-        # initialize logger
-        username = credientalsDict['username']
-        self.logger_ = logging.getLogger(f'RedditAPISession {username}' )       
-        self.logger_.info('Reddit API Session logger initialized.')
-        
+        self.OAuthSuccessful_ = self.generateAuthentifiedHeader()
+       
+        if self.OAuthSuccessful_:  
+            self.logger_.info('Account successfully authenticated')               
+        else:
+            self.logger_.error('Unable to authenticate account')    
+
     #########################################################################
     # PRIVATE FUNCTIONS
     #########################################################################
 
     def generateAuthentifiedHeader( self,
                                     headerKey = DEFAULT_HEADER_KEY,
-                                    headerValue = DEFAULT_HEADER_VALUE):
+                                    headerValue = DEFAULT_HEADER_VALUE) -> bool:
+        
+        successFlag = False
                       
         # note that CLIENT_ID refers to 'personal use script' and SECRET_TOKEN to 'token'
         auth = requests.auth.HTTPBasicAuth( self.credientalsDict_[CRED_CLIENT_ID_KEY],
@@ -69,16 +77,21 @@ class RedditAPISession:
         self.header_[headerKey] =  headerValue
 
         # send our request for an OAuth token
-        resp = requests.post(   REDDIT_OAUTH_POST, # TODO: Make this a CONST somewhere
+        resp = requests.post(   REDDIT_OAUTH_POST, 
                                 auth=auth, 
                                 data=self.credientalsDict_, 
                                 headers=self.header_)
-                
-        # convert response to JSON and get access_token value
-        TOKEN = resp.json()[REDDIT_OAUTH_KEY]
+        if resp.status_code == 200:
+                       
+            successFlag = True
+               
+            # convert response to JSON and get access_token value
+            TOKEN = resp.json()[REDDIT_OAUTH_KEY]
 
-        # add authorization to our headers dictionary
-        self.header_[REDDUT_AUTHEN_KEY] = f"bearer {TOKEN}"
+            # add authorization to our headers dictionary
+            self.header_[REDDUT_AUTHEN_KEY] = f"bearer {TOKEN}"
+
+        return successFlag
 
     ####################################################################################################
     # This function returns the comments for a given post
@@ -243,9 +256,11 @@ class RedditAPISession:
         
         self.logger_.info('handleSubRedditJob')  
         
-        successFlag = None
-              
-        if jobDict['getposts'] == 1: 
+        successFlag = False
+        
+        if not self.OAuthSuccessful_:
+            self.logger_.error('Account was not authenticated.')              
+        elif jobDict['getposts'] == 1: 
             self.logger_.info('getSubredditPosts')
             successFlag = self.getSubredditPosts(jobDict)
         elif len(jobDict['keyword']) > 0:
