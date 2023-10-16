@@ -531,7 +531,7 @@ class Comments(object):
                 self._youtube.state.videos_ids = videos_ids[start:len(videos_ids)]
             except:
                 ex = traceback.format_exc()
-                st = log_format("get_comments_count", ex)
+                st = log_format("get_comments_and_commenters", ex)
                 logger.error(st)
                 #self._youtube.state.set_error_description(True, st)
 

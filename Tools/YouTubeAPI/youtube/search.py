@@ -65,6 +65,7 @@ class Search(object):
             msg = get_HTTP_error_msg(error)
             st = log_format("__get_videos_id_by_query", msg)
             logger.error(st)
+            msg = "HTTP Error on searching videos by a query. Check the query format."
             self._youtube.state.set_error_description(True, msg)
 
 
@@ -72,7 +73,8 @@ class Search(object):
             ex = traceback.format_exc()
             st = log_format("__get_videos_id_by_query", ex)
             logger.error(st)
-            self._youtube.state.set_error_description(True, st)
+            msg = "Error on searching videos by a query. Check the query format."
+            self._youtube.state.set_error_description(True, msg)
 
         #if search_finished:
         #    self._youtube.state.remove_action(config.ACTION_QUERY_SEARCH)
@@ -118,6 +120,7 @@ class Search(object):
             ex = traceback.format_exc()
             st = log_format("get_videos_id_by_query", ex)
             logger.error(st)
+            st = "Error on retrieving videos'ids by a query. "
             self._youtube.state.set_error_description(True, st)
 
         return videos_ids

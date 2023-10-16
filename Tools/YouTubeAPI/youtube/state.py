@@ -109,6 +109,7 @@ class State(object):
             ex = traceback.format_exc()
             st = log_format("from_dict_to_state", ex)
             logger.error(st)
+            st = "Error on saving the job state."
             self._youtube.state.set_error_description(True, st)
 
 

@@ -32,7 +32,7 @@ class Playlist(object):
             msg = f"{url} is not a valid playlist url. "
             st = log_format("get_playlist_id", msg)
             logger.error(st)
-            self._youtube.state.set_error_description(True, st)
+            self._youtube.state.set_error_description(True, msg)
 
 
         return id
@@ -74,6 +74,7 @@ class Playlist(object):
             ex = traceback.format_exc()
             st = log_format("get_playlist_title", ex)
             logger.error(st)
+            st = "Error on getting the playlist title."
             self._youtube.state.set_error_description(True, st)
 
         self.title = title
@@ -124,7 +125,8 @@ class Playlist(object):
                     self._youtube.state.quota_exceeded = True
                     st = log_format("_get_playlist_videos_ids","Out of quota")
                     logger.error(st)
-                    self._youtube.state.set_error_description(True, msg)
+                    st = "Out of quota."
+                    self._youtube.state.set_error_description(True, st)
                     break
 
         except HttpError as error:
@@ -137,6 +139,7 @@ class Playlist(object):
             ex = traceback.format_exc()
             st = log_format("_get_playlist_videos_ids", ex)
             logger.error(st)
+            st = "Error occurred when retrieving playlist's videos' ids."
             self._youtube.state.set_error_description(True, st)
 
         self.videos_ids = list(set(videos_ids))
