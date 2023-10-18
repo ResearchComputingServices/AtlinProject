@@ -158,6 +158,28 @@ def decodeSortOption(sort_option: str) -> str:
 
 ####################################################################################################
 #
+####################################################################################################
+def checkKeyword(jobDictDB):
+    keywords = jobDictDB['keyword_list']
+    getposts = 0
+    
+    if len(keywords) == 0:
+        getposts = 1
+    
+    return keywords, getposts
+
+####################################################################################################
+#
+####################################################################################################
+def checkGetComments(jobDictDB):
+    getcomments = 1
+    if jobDictDB['scrape_comments'] == 'false':
+        getcomments = 0
+        
+    return getcomments
+
+####################################################################################################
+#
 # 'job_detail': {
 #       'job_submit': {
 #           'post_list': '', 
@@ -170,16 +192,15 @@ def decodeSortOption(sort_option: str) -> str:
 #           'subreddit_name': '', 
 #           'scrape_comments': 'false'}},
 #################################################################################################### 
+
 def getSubredditJobDict(jobDictDB):
     
-    sort_by, time_frame =decodeSortOption(jobDictDB['sort_option'])
-    
-    keywords = ''
-    getposts = 1
-    if 'keyword_list' in jobDictDB.keys():
-        keywords = jobDictDB['keyword_list']
-        getposts = 0
+    sort_by, time_frame = decodeSortOption(jobDictDB['sort_option'])
         
+    keywords, getposts = checkKeyword(jobDictDB)
+   
+    getcomments = checkGetComments(jobDictDB)
+   
     jobDict = { REDDIT_JOB_DETAIL_SORT_BY : sort_by,
                 REDDIT_JOB_DETAIL_TIME_FRAME : time_frame,  
                 REDDIT_JOB_DETAIL_N : int(jobDictDB['response_count']), 
@@ -188,7 +209,7 @@ def getSubredditJobDict(jobDictDB):
                 REDDIT_JOB_DETAIL_POST: ['', ''],
                 REDDIT_JOB_DETAIL_KEYWORD: keywords,
                 REDDIT_JOB_DETAIL_GETPOSTS: getposts,
-                REDDIT_JOB_DETAIL_COMMENTS: 0}
+                REDDIT_JOB_DETAIL_COMMENTS: getcomments}
     
     return jobDict
 
@@ -211,6 +232,7 @@ def getSubredditJobDict(jobDictDB):
 def getPostJobDict(jobDictDB):
     
     sort_by, time_frame =decodeSortOption(jobDictDB['sort_option'])
+    getcomments = checkGetComments(jobDictDB)
     
     jobDict = { REDDIT_JOB_DETAIL_SORT_BY : sort_by,
                 REDDIT_JOB_DETAIL_TIME_FRAME : time_frame,  
@@ -219,8 +241,8 @@ def getPostJobDict(jobDictDB):
                 REDDIT_JOB_DETAIL_USER: '',
                 REDDIT_JOB_DETAIL_POST: [jobDictDB['subreddit_name'], jobDictDB['post_list']],
                 REDDIT_JOB_DETAIL_KEYWORD: '',
-                REDDIT_JOB_DETAIL_GETPOSTS: 1,
-                REDDIT_JOB_DETAIL_COMMENTS: 0}
+                REDDIT_JOB_DETAIL_GETPOSTS: 1-getcomments,
+                REDDIT_JOB_DETAIL_COMMENTS: getcomments}
     
     return jobDict
 
@@ -242,6 +264,7 @@ def getPostJobDict(jobDictDB):
 def getUserJobDict(jobDictDB):
     
     sort_by, time_frame =decodeSortOption(jobDictDB['sort_option'])
+    getcomments = checkGetComments(jobDictDB)
     
     jobDict = { REDDIT_JOB_DETAIL_SORT_BY : sort_by,
                 REDDIT_JOB_DETAIL_TIME_FRAME : time_frame,  
@@ -250,8 +273,8 @@ def getUserJobDict(jobDictDB):
                 REDDIT_JOB_DETAIL_USER: jobDictDB['username_list'],
                 REDDIT_JOB_DETAIL_POST: ['', ''],
                 REDDIT_JOB_DETAIL_KEYWORD: '',
-                REDDIT_JOB_DETAIL_GETPOSTS: 1,
-                REDDIT_JOB_DETAIL_COMMENTS: 0}
+                REDDIT_JOB_DETAIL_GETPOSTS: 1-getcomments,
+                REDDIT_JOB_DETAIL_COMMENTS: getcomments}
 
     return jobDict
 
