@@ -121,7 +121,7 @@ class JobScheduler:
             self.logger_.error(e)  
         
         return 
-
+    
     ############################################################################################
     # Helper function that returns a list of currently used token_uids
     ############################################################################################
@@ -160,8 +160,8 @@ class JobScheduler:
         return potentiallyRunnableJobs
     
     ############################################################################################
-    # Clears out all running jobs from the database and sets there status to FAILED. This is
-    # function is executed before the scheduler starts it's main loop.
+    # Clears out all running jobs from the database and sets there status to FAILED. This
+    # function is executed before the scheduler starts it's main loop and when handling SIGINT
     ############################################################################################
     def _clearRunningJobs(self):
                         

@@ -38,8 +38,9 @@ def UpdateOutputPath(jobJSON, output_path) -> None:
         jobJSON['output_path'] = output_path
         jobJSON['job_status'] = "RUNNING"
 
-        atlin.job_update(job_uid = jobJSON['job_uid'],
-                        data = jobJSON)
+        atlin.job_update(   job_uid = jobJSON['job_uid'],
+                            data = jobJSON)
+        
     except Exception as e:
         logger.debug(e)    
     
@@ -48,18 +49,31 @@ def UpdateOutputPath(jobJSON, output_path) -> None:
 ####################################################################################################
 #
 ####################################################################################################
+
+def UpdateJobMsg(jobJSON, job_msg) -> None:
+            
+    return
+
+####################################################################################################
+#
+####################################################################################################
 def GenerateOutputDirectory(jobJSON) -> str:
     
     job_uid = jobJSON['job_uid']
+    
+    #Check if the main output directory exists, it if doesn't create it.
+    if not os.path.isdir(config.MAIN_OUTPUT_DIR):
+        os.mkdir(config.MAIN_OUTPUT_DIR)
+    
+    # generate the job specific output directory    
     output_path = os.path.join(config.MAIN_OUTPUT_DIR, job_uid)
 
     #Check if the output directory exists, it if doesn't create it.
     if not os.path.isdir(output_path):
         os.mkdir(output_path)
 
-    UpdateOutputPath(jobJSON, output_path)
-
     return output_path   
+
 ####################################################################################################
 # This function handles the get request and any associated errors
 ####################################################################################################
@@ -160,11 +174,13 @@ def decodeSortOption(sort_option: str) -> str:
 #
 ####################################################################################################
 def checkKeyword(jobDictDB):
-    keywords = jobDictDB['keyword_list']
-    getposts = 0
     
-    if len(keywords) == 0:
-        getposts = 1
+    keywords = ''
+    getposts = 1
+    
+    if 'keyword_list' in jobDictDB.keys():
+        keywords = jobDictDB['keyword_list']
+        getposts = 0
     
     return keywords, getposts
 
@@ -180,19 +196,7 @@ def checkGetComments(jobDictDB):
 
 ####################################################################################################
 #
-# 'job_detail': {
-#       'job_submit': {
-#           'post_list': '', 
-#           'option_type': 'SUBREDDIT', 
-#           'sort_option': 'TOP_TODAY', 
-#           'scrape_option': 'BASIC', 
-#           'username_list': '', 
-#           'response_count': '5', 
-#           'subreddit_list': 'canada', 
-#           'subreddit_name': '', 
-#           'scrape_comments': 'false'}},
 #################################################################################################### 
-
 def getSubredditJobDict(jobDictDB):
     
     sort_by, time_frame = decodeSortOption(jobDictDB['sort_option'])
@@ -215,19 +219,6 @@ def getSubredditJobDict(jobDictDB):
 
 ####################################################################################################
 #
-# 'job_detail': {
-#         'job_submit': {
-#             'post_list': '173bygx\n    ', 
-#             'option_type': 'POST', 
-#             'sort_option': 'BEST', 
-#             'keyword_list': '', 
-#             'scrape_option': '', 
-#             'username_list': '', 
-#             'response_count': '', 
-#             'subreddit_list': '', 
-#             'subreddit_name': 'canada', 
-#             'scrape_comments': ''}
-#             }, 
 ####################################################################################################
 def getPostJobDict(jobDictDB):
     
@@ -248,18 +239,6 @@ def getPostJobDict(jobDictDB):
 
 ####################################################################################################
 #
-# 'job_detail': {
-#       'job_submit': {
-#           'post_list': '', 
-#           'option_type': 'USER', 
-#           'sort_option': 'BEST', 
-#           'keyword_list': '', 
-#           'scrape_option': '', 
-#           'username_list': 'DonSalaam', 
-#           'response_count': '5', 
-#           'subreddit_list': '', 
-#           'subreddit_name': '', 
-#           'scrape_comments': 'false'}}
 ####################################################################################################
 def getUserJobDict(jobDictDB):
     
@@ -281,10 +260,11 @@ def getUserJobDict(jobDictDB):
 ####################################################################################################
 #
 ####################################################################################################
-
 def getJobDict(jobJSON) -> dict:
     
     logger = logging.getLogger('RedditInterface')
+    jobDict = None
+
     try:
         jobDict = initializeJobDict()
             
@@ -301,10 +281,43 @@ def getJobDict(jobJSON) -> dict:
             logger.info(f'Unknown option_type: {job_type}')
     
     except Exception as e:
-        logger.info(e)
-        jobDict = None
+        logger.error(e)
         
     return jobDict
+
+####################################################################################################
+# save the scraped data to a output folder previously generated.
+####################################################################################################
+def SaveResponses(jobJSON, listOfResponses) -> bool:
+    
+    success_flag = False
+    
+    folderPath = jobJSON['output_path']
+    
+    # check if the file path exists and is accessbile then write the listOfResponses_ to the file
+    if os.path.exists(folderPath):          
+        filename = jobJSON['job_name']+'.json'
+        
+        filePath = os.path.join(folderPath, filename)
+        file = open(filePath, "w")
+        
+        if len(listOfResponses) == 0:
+            file.write('No data found matching scraping criteria.')
+        
+        else:
+            for responseJSON in listOfResponses:
+                dict = responseJSON['data']
+                
+                for key in dict.keys():                        
+                    file.write(str(key)+' : ' + str(dict[key]) + '\n')
+            
+                file.write(RESPONSE_BREAK+'\n')
+        
+        file.close()     
+        
+        success_flag = True   
+            
+    return success_flag
 
 ####################################################################################################
 #
@@ -319,50 +332,50 @@ def RedditInterface(jobJSON):
      
     job_uid = jobJSON['job_uid']
     logger.info(f'Preforming Reddit job: {job_uid}')
-    logger.info(jobJSON)
+    logger.info('JobJSON from DB: \n', jobJSON)
     
     # the credientals  and job details from the JOB_JSON object    
-    logger.info('Constructing jobDict')
     jobDict = getJobDict(jobJSON)
-    if jobDict != None:
-        logger.info('RedditInterface jobDict:', jobDict)
     
-        logger.info('Waiting for credentials')
+    if jobDict != None:
+        logger.info('jobDict:', jobDict)
+    
         credentialsDict = getCredentialsDict(jobJSON)
-        logger.info('credentialsDict RECIEVED')
     
         # create an output directory to store the collected data in
-        GenerateOutputDirectory(jobJSON)
-        logger.info('Output directory generated')
+        output_path = GenerateOutputDirectory(jobJSON)
+        
+        UpdateOutputPath(jobJSON, output_path)
         
         # connect to reddit API
         session = RedditAPISession(credentialsDict) 
-        logger.info('RedditAPISession started.')
             
         # execute the job as defined by the jobDict
         if session.HandleJobDict(jobDict):
-                    
-            if session.SaveResponses(jobJSON):
-                logging.info('RedditInterface: Data saved.')
+            logger.info('Job completed: SUCCESS.')    
+            
+            if SaveResponses(jobJSON, session.GetResponses()):
+                logger.info('Job saved.')
+                jobStatus = JobStatus().success
             else:
-                logging.info('RedditInterface: Unable to save data.')
-
+                logging.error('Unable to save job.')
+                jobStatus = JobStatus().failed
+            
             # update quota used
             quotaUsed = session.GetNumberOfRequests()
             UpdateQuota(jobJSON, quotaUsed)
 
-            # update the returned job status
-            jobStatus = JobStatus().success
-            
-            logger.info('RedditAPISession Job completed SUCCESSFULLY.')
         else:
-            logger.info('RedditInterface Job completed FAILED.')
+            logger.error('Job completed: FAILED.')
+        
+        # update the job_message with the message returned form RedditAPISession
+        UpdateJobMsg(jobJSON, session.get_job_msg())        
         
         # disconnect from the reddit API
         session.End()
-        logger.info('RedditInterface: session ENDED.')
+        logger.info('session ENDED.')
 
-    return  jobStatus
+    return jobStatus
  
 #############################################################################################
 # Test Code:
