@@ -127,13 +127,15 @@ class Youtube:
             videos_ids = get_ids_from_file(filename, "videoId")
             if videos_ids:
                 # Get data from YouTube API
-                self.videos.get_videos_and_videocreators(videos_ids)
+                response = self.videos.get_videos_and_videocreators(videos_ids)
             else:
                 logger.debug("Video's ids couldn't be retrieved. Check input file.")
         except:
             logger.debug("Error on get_videos_from_file")
             logger.debug(sys.exc_info()[0])
             logger.debug(traceback.print_exc())
+
+        return response
 
     # **********************************************************************************************************
     # This function extracts a list of videos ids from an excel file (The excel file must contain the column
@@ -147,13 +149,14 @@ class Youtube:
             videos_ids = get_ids_from_file(filename, "videoId")
             if videos_ids:
                 # Get data from YouTube API
-                self.comments.get_comments_and_commenters(videos_ids)
+                response = self.comments.get_comments_and_commenters(videos_ids)
             else:
                 logger.debug("Video's ids couldn't be retrieved. Check input file.")
         except:
             logger.debug("Error on get_videos_from_file")
             logger.debug(sys.exc_info()[0])
             logger.debug(traceback.print_exc())
+        return response
 
 
     # *****************************************************************************************************

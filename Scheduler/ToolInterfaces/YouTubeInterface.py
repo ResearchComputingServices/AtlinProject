@@ -281,6 +281,9 @@ def handle_new_job():
                     response = yt.get_videos_metadata_from_file(input)
                     utils.save_file(response, atlin_yt_job.job.output_path, filename)
                 else:
+                    filename = atlin_yt_job.job.job_uid + "_" + action
+                    filename = utils.get_filename(filename, extension)
+
                     response = yt.get_videos_comments_from_file(input)
                     utils.save_file(response, atlin_yt_job.job.output_path, filename)
 
