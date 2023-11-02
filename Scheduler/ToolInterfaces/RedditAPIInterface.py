@@ -214,7 +214,7 @@ def getSubredditJobDict(jobDictDB):
                 REDDIT_JOB_DETAIL_KEYWORD: keywords,
                 REDDIT_JOB_DETAIL_GETPOSTS: getposts,
                 REDDIT_JOB_DETAIL_COMMENTS: getcomments}
-    
+
     return jobDict
 
 ####################################################################################################
