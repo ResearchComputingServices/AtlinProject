@@ -18,7 +18,7 @@ from atlin_api.atlin_api import *
 from Scheduler.Utils import  *
 import Config as config
 from ToolInterfaces.ToolInterface import genericInterface
-from ToolInterfaces.RedditAPIInterface import RedditInterface
+from Scheduler.ToolInterfaces.reddit_api_interface import reddit_interface
 from ToolInterfaces.CrawlerInterface import CrawlerInterface
 from ToolInterfaces.YouTubeInterface import YouTubeInterface
 
@@ -290,7 +290,7 @@ if __name__ == '__main__':
        
     js = JobScheduler(waitTime=WAIT_TIME)
     
-    js.AddJobType('REDDIT', RedditInterface)
+    js.AddJobType('REDDIT', reddit_interface)
     js.AddJobType('YOUTUBE', YouTubeInterface)
     js.AddJobType('CRAWL', CrawlerInterface)
     

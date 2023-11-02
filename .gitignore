@@ -23,3 +23,8 @@ atenv
 
 Output/*
 Logs/*
+
+cred.json
+.vscode/
+
+Tools/RedditAPITool/test.sh
