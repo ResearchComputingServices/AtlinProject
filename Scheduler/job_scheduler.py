@@ -24,14 +24,14 @@ class JobScheduler:
     """
 
     def __init__(   self,
-                    dataBaseDomain = config.ATLIN_API_ADDRESS,
+                    data_base_domain = config.ATLIN_API_ADDRESS,
                     wait_Time = 60):
 
         self._wait_time = wait_Time
 
         self._keep_running = True
 
-        self._atlin_session = Atlin(dataBaseDomain)
+        self._atlin_session = Atlin(data_base_domain)
 
         self._job_handle_dict = {}
 
@@ -56,8 +56,9 @@ class JobScheduler:
         # are dictionaries with the correct key-value pairs
 
         # Create a context manager to handle the opening/closing of processes
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            for job_json in list_of_job_jsons:                          
+        #with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            for job_json in list_of_job_jsons:                  
                 # get the data from the job dictionary
                 job_type = job_json['social_platform']
 
