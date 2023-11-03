@@ -5,7 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.as_posix()
 sys.path.insert(0, BASE_DIR)
 
 import logging
-
+from types import FrameType
 from requests import Response
 
 import concurrent.futures
@@ -25,9 +25,9 @@ class JobScheduler:
 
     def __init__(   self,
                     data_base_domain = config.ATLIN_API_ADDRESS,
-                    wait_Time = 60):
+                    wait_time = 60):
 
-        self._wait_time = wait_Time
+        self._wait_time = wait_time
 
         self._keep_running = True
 
@@ -58,39 +58,37 @@ class JobScheduler:
         # Create a context manager to handle the opening/closing of processes
         #with concurrent.futures.ProcessPoolExecutor() as executor:
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            for job_json in list_of_job_jsons:                  
+            for job_json in list_of_job_jsons:              
                 # get the data from the job dictionary
                 job_type = job_json['social_platform']
 
-                if job_type in self._job_handle_dict.keys():
+                try:
                     # start a process that will execute the correct script
                     executor.submit(genericInterface,
                                     self._job_handle_dict[job_type],
                                     job_json)
-                else:
-                    self._logger.error('Unknown Job Type: %s',{job_type})
+                except KeyError as e:
+                    self._logger.error('Unknown Job Type: %s',e)
 
             # this allows the context manager to return before each process is finished
             # which means the scheduler is free to go back and check for other new jobs
             executor.shutdown(wait=False)
 
-        return
-
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def _handler_sig_int(self,
-                         sig, 
-                         frame) -> None:
+                         sig : int,
+                         frame : FrameType) -> None:
         """Handle receiving SIGINT signal
 
         Args:
             sig (_type_): _description_
             frame (_type_): _description_
         """
-
-        self._logger.info('Handling SIGINT')
-        self._clear_running_jobs()
-        sys.exit(0)
+        if sig is not None and frame is not None:
+            self._logger.info('Handling SIGINT')
+            self._clear_running_jobs()
+            sys.exit(0)
 
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -107,7 +105,6 @@ class JobScheduler:
 
         response = None
 
-        # request all the "created"
         try:
             response = self._atlin_session.job_get(job_status=[job_status])
         except Exception as e:

@@ -23,7 +23,7 @@ def main():
                                 output_filename_prefix=config.LOGGER_FILE_PREFIX,
                                 n_log_files=config.N_LOG_FILES)
 
-    js = JobScheduler(wait_Time=WAIT_TIME)
+    js = JobScheduler(wait_time=WAIT_TIME)
 
     js.add_job_type('REDDIT', reddit_interface)
     js.add_job_type('YOUTUBE', YouTubeInterface)
