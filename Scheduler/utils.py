@@ -9,3 +9,8 @@ REDDIT_JOB = 'REDDIT'
 CRAWL_JOB = 'CRAWL'
 YOUTUBE_JOB = 'YOUTUBE'
 TWITTER_JOB = 'TWITTER'
+
+JOB_TYPE_LIST = [REDDIT_JOB,
+                 CRAWL_JOB,
+                 YOUTUBE_JOB,
+                 TWITTER_JOB]

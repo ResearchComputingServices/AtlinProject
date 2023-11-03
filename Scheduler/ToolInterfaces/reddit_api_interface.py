@@ -15,7 +15,7 @@ import os
 from Tools.RedditAPITool.reddit_api_session import RedditAPISession
 from Tools.RedditAPITool.reddit_constants import RedditConstants as constants
 
-from atlin_api.atlin_api import Atlin, JobStatus, RedditJobDetails, RedditToken
+from atlin_api.atlin_api import Atlin, JobStatus
 import Config as config
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

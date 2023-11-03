@@ -12,21 +12,21 @@ import requests
 class JobStatus:
     """Job Status"""
 
-    valid_values = ["CREATED", "RUNNING", "PAUSED", "FAILED", "SUCCESS"]
     created = "CREATED"
     running = "RUNNING"
     paused = "PAUSED"
     failed = "FAILED"
     success = "SUCCESS"
+    deleted = "DELETED"
 
+    valid_values = [created, running, paused, failed, success, deleted]
 
 class JobPlatform:
     """Job Platform"""
-
-    valid_values = ["YOUTUBE", "REDDIT"]
     youtube = "YOUTUBE"
     reddit = "REDDIT"
-
+    
+    valid_values = [youtube, reddit]
 
 class AtlinBase(ABC):
     """Atlin Base used by Youtube and Reddit."""
@@ -44,10 +44,6 @@ class AtlinBase(ABC):
     def url_api(self):
         """The url of the api"""
         return f"{self._domain}{self._apipath}"
-
-    # @abstractmethod
-    # def job_get_detail_schema(self, **kwargs):
-    #     '''job_get_detail_schema will be deprecated.'''
 
     def _request_delete(self, url, headers, params, body):
         try:
