@@ -1,13 +1,13 @@
 import logging
 import time
 
-from Scheduler.Utils import *
-import Config as config
-from atlin_api.atlin_api import *
-
 import sys
-sys.path.insert(0, BASE_DIR)
 
+from Scheduler.utils import BASE_DIR
+import Config as config
+from atlin_api.atlin_api import Atlin, JobStatus
+
+sys.path.insert(0, BASE_DIR)
 
 ####################################################################################################
 # This function will continue to attempt to update the status of a job until sucessful (code 200)
@@ -29,19 +29,18 @@ def updateJobStatus(job_uid, status) -> None:
 
 ####################################################################################################
 # A Generic Tool Interface which ensures the job status is updated correctly
-def genericInterface(toolFunctionPointer, jobJSON):
+def genericInterface(tool_func_ptr, 
+                     job_json):
 
-    logger = logging.getLogger('genericInterface')
+    job_uid = job_json['job_uid']
 
-    job_uid = jobJSON['job_uid']
-                   
     # Set the job status to "RUNNING"
     updateJobStatus(job_uid, JobStatus().running)
- 
+
     # Make call to tool
-    jobCompleteStatus = toolFunctionPointer(jobJSON)
-    
+    job_complete_status = tool_func_ptr(job_json)
+
     # update job status to as either SUCCESS or FAILURE
-    updateJobStatus(job_uid, jobCompleteStatus)
-    
-    return  
+    updateJobStatus(job_uid, job_complete_status)
+
+    return
